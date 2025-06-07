@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace QuanLyNhaHang
 {
     public partial class FormMain : Form
     {
+        public string QuyenHienTai { get; set; } = "";
+
+        // Biến lưu FormQuanLyBan hiện tại để truyền tham số cho FormDSHoaDon
+        private FormQuanLyBan? formQuanLyBanInstance;
+
         public FormMain()
         {
             InitializeComponent();
@@ -22,6 +20,7 @@ namespace QuanLyNhaHang
         {
 
         }
+
         private void menuQuanLyBan_Click(object sender, EventArgs e)
         {
             OpenFormQuanLyBan();
@@ -34,31 +33,33 @@ namespace QuanLyNhaHang
                 if (frm is FormQuanLyBan)
                 {
                     frm.Focus();
+                    formQuanLyBanInstance = (FormQuanLyBan)frm;
                     return;
                 }
             }
 
-            FormQuanLyBan formBan = new FormQuanLyBan();
-            formBan.MdiParent = this;  // Nếu FormMain là MDI container
-            formBan.Show();
+            formQuanLyBanInstance = new FormQuanLyBan();
+            formQuanLyBanInstance.MdiParent = this;
+            formQuanLyBanInstance.Show();
         }
 
         private void quảnLíBànToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // Mở form quản lý bàn ăn
             foreach (Form f in this.MdiChildren)
             {
                 if (f is FormQuanLyBan)
                 {
                     f.Activate();
+                    formQuanLyBanInstance = (FormQuanLyBan)f;
                     return;
                 }
             }
 
-            FormQuanLyBan formQuanLyBan = new FormQuanLyBan();
-            formQuanLyBan.MdiParent = this;
-            formQuanLyBan.Show();
+            formQuanLyBanInstance = new FormQuanLyBan();
+            formQuanLyBanInstance.MdiParent = this;
+            formQuanLyBanInstance.Show();
         }
+
         private void mónĂnToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (Form frm in this.MdiChildren)
@@ -91,14 +92,21 @@ namespace QuanLyNhaHang
 
         private void tạoMớiHóaĐơnToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormTaoHoaDon)
+                {
+                    frm.Activate();
+                    return;
+                }
+            }
             FormTaoHoaDon formTaoHoaDon = new FormTaoHoaDon();
-            formTaoHoaDon.MdiParent = this; // nếu FormMain là MDI container
+            formTaoHoaDon.MdiParent = this;
             formTaoHoaDon.Show();
         }
 
         private void kháchHàngToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // Kiểm tra nếu form quản lí khách hàng đã mở rồi thì focus lên đó, không tạo mới
             foreach (Form child in this.MdiChildren)
             {
                 if (child is FormKhachHang)
@@ -107,13 +115,80 @@ namespace QuanLyNhaHang
                     return;
                 }
             }
-
-            // Tạo mới form quản lí khách hàng và đặt cha là FormMain (MDI Parent)
             FormKhachHang formKH = new FormKhachHang();
             formKH.MdiParent = this;
             formKH.Show();
         }
 
+        private void đặtBànToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormDatBan)
+                {
+                    frm.Activate();
+                    return;
+                }
+            }
+            FormDatBan formDatBan = new FormDatBan();
+            formDatBan.MdiParent = this;
+            formDatBan.Show();
+        }
+
+        private void danhSáchHóaĐơnToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormDSHoaDon)
+                {
+                    frm.Activate();
+                    return;
+                }
+            }
+
+            // Tạo mới FormDSHoaDon và truyền formQuanLyBanInstance làm tham số
+            FormDSHoaDon formDSHoaDon = new FormDSHoaDon(formQuanLyBanInstance ?? new FormQuanLyBan());
+            formDSHoaDon.MdiParent = this;
+            formDSHoaDon.Show();
+        }
+
+        private void nhânViênToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (QuyenHienTai == "Admin")
+            {
+                foreach (Form frm in this.MdiChildren)
+                {
+                    if (frm is FormNhanVien)
+                    {
+                        frm.Activate();
+                        return;
+                    }
+                }
+                FormNhanVien formNhanVien = new FormNhanVien();
+                formNhanVien.MdiParent = this;
+                formNhanVien.Show();
+            }
+            else
+            {
+                MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void báoCáoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormBaoCao)
+                {
+                    frm.Activate(); // Kích hoạt form đã mở
+                    return;         // Thoát không tạo form mới
+                }
+            }
+            // Nếu chưa có form thì tạo mới
+            FormBaoCao formBaoCao = new FormBaoCao();
+            formBaoCao.MdiParent = this; // Gán form cha
+            formBaoCao.Show();           // Hiển thị form
+        }
 
     }
 }

@@ -244,6 +244,7 @@
             Controls.Add(btnThem);
             Controls.Add(dtgvMonAn);
             Name = "FormMonAn";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FormMonAn";
             Load += FormMonAn_Load;
             ((System.ComponentModel.ISupportInitialize)dtgvMonAn).EndInit();

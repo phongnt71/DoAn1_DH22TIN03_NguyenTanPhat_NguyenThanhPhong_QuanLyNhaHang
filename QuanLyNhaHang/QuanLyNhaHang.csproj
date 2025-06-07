@@ -9,8 +9,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+	  <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+	  <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+	  <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+    <PackageReference Include="Xceed.Words.NET" Version="5.0.25228.6154" />
   </ItemGroup>
+
+	<PropertyGroup>
+		<EmbedInteropTypes>true</EmbedInteropTypes>
+	</PropertyGroup>
+	<ItemGroup>
+		<COMReference Include="Microsoft.Office.Interop.Word">
+			<Guid>{00020905-0000-0000-C000-000000000046}</Guid>
+			<VersionMajor>8</VersionMajor>
+			<VersionMinor>4</VersionMinor>
+			<Lcid>0</Lcid>
+			<WrapperTool>primary</WrapperTool>
+			<Isolated>false</Isolated>
+		</COMReference>
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="FormBaoCao.cs">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Compile>
+	</ItemGroup>
+
 
 </Project>

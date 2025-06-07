@@ -42,6 +42,10 @@
             btnXoa = new Button();
             btnSua = new Button();
             btnThem = new Button();
+            txtGiaNhap = new TextBox();
+            label5 = new Label();
+            dtpNgayNhap = new DateTimePicker();
+            label6 = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvNguyenLieu).BeginInit();
             SuspendLayout();
             // 
@@ -164,11 +168,47 @@
             btnThem.Text = "Thêm";
             btnThem.UseVisualStyleBackColor = true;
             // 
+            // txtGiaNhap
+            // 
+            txtGiaNhap.Location = new Point(492, 258);
+            txtGiaNhap.Name = "txtGiaNhap";
+            txtGiaNhap.Size = new Size(224, 27);
+            txtGiaNhap.TabIndex = 36;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(374, 265);
+            label5.Name = "label5";
+            label5.Size = new Size(68, 20);
+            label5.TabIndex = 35;
+            label5.Text = "Giá nhập";
+            // 
+            // dtpNgayNhap
+            // 
+            dtpNgayNhap.Location = new Point(492, 291);
+            dtpNgayNhap.Name = "dtpNgayNhap";
+            dtpNgayNhap.Size = new Size(224, 27);
+            dtpNgayNhap.TabIndex = 38;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(374, 298);
+            label6.Name = "label6";
+            label6.Size = new Size(81, 20);
+            label6.TabIndex = 37;
+            label6.Text = "Ngày nhập";
+            // 
             // FormNguyenLieu
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(dtpNgayNhap);
+            Controls.Add(label6);
+            Controls.Add(txtGiaNhap);
+            Controls.Add(label5);
             Controls.Add(btnHuy);
             Controls.Add(btnLuu);
             Controls.Add(btnXoa);
@@ -184,6 +224,7 @@
             Controls.Add(label1);
             Controls.Add(dgvNguyenLieu);
             Name = "FormNguyenLieu";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FormNguyenLieu";
             Load += FormNguyenLieu_Load;
             ((System.ComponentModel.ISupportInitialize)dgvNguyenLieu).EndInit();
@@ -207,5 +248,9 @@
         private Button btnXoa;
         private Button btnSua;
         private Button btnThem;
+        private TextBox txtGiaNhap;
+        private Label label5;
+        private DateTimePicker dtpNgayNhap;
+        private Label label6;
     }
 }

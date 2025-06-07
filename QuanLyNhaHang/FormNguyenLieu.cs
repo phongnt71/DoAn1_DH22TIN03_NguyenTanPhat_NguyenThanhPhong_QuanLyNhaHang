@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Globalization;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 
@@ -50,7 +51,11 @@ namespace QuanLyNhaHang
                     dgvNguyenLieu.Columns["TenNguyenLieu"].HeaderText = "Tên nguyên liệu";
                     dgvNguyenLieu.Columns["SoLuongTon"].HeaderText = "Số lượng";
                     dgvNguyenLieu.Columns["DonViTinh"].HeaderText = "Đơn vị tính";
+                    dgvNguyenLieu.Columns["GiaNhap"].HeaderText = "Giá nhập";
                     dgvNguyenLieu.Columns["GhiChu"].HeaderText = "Ghi chú";
+                    dgvNguyenLieu.Columns["NgayNhap"].HeaderText = "Ngày nhập";
+                    dgvNguyenLieu.Columns["NgayNhap"].DefaultCellStyle.Format = "dd/MM/yyyy";
+                    dgvNguyenLieu.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                 }
                 catch (Exception ex)
                 {
@@ -67,7 +72,25 @@ namespace QuanLyNhaHang
                 txtTenNguyenLieu.Text = row.Cells["TenNguyenLieu"].Value?.ToString();
                 txtSoLuongTon.Text = row.Cells["SoLuongTon"].Value?.ToString();
                 txtDonViTinh.Text = row.Cells["DonViTinh"].Value?.ToString();
+                if (decimal.TryParse(row.Cells["GiaNhap"].Value?.ToString(), out decimal giaNhap))
+                {
+                    txtGiaNhap.Text = giaNhap.ToString("N0", new CultureInfo("vi-VN"));
+                }
+                else
+                {
+                    txtGiaNhap.Text = "0";
+                }
                 txtGhiChu.Text = row.Cells["GhiChu"].Value?.ToString();
+
+                if (row.Cells["NgayNhap"].Value != DBNull.Value)
+                {
+                    dtpNgayNhap.Value = Convert.ToDateTime(row.Cells["NgayNhap"].Value);
+                }
+                else
+                {
+                    dtpNgayNhap.Value = DateTime.Now;
+                }
+                isEditing = true;
             }
         }
 
@@ -88,6 +111,7 @@ namespace QuanLyNhaHang
                 SetButtonState();
             }
         }
+
         private void BtnXoa_Click(object sender, EventArgs e)
         {
             if (dgvNguyenLieu.CurrentRow == null) return;
@@ -124,6 +148,7 @@ namespace QuanLyNhaHang
                 }
             }
         }
+
         private void BtnLuu_Click(object sender, EventArgs e)
         {
             if (!ValidateInput()) return;
@@ -135,13 +160,13 @@ namespace QuanLyNhaHang
 
                 if (isAdding)
                 {
-                    string query = "INSERT INTO NguyenLieu (TenNguyenLieu, SoLuongTon, DonViTinh, GhiChu) VALUES (@Ten, @SoLuong, @DonVi, @GhiChu)";
+                    string query = "INSERT INTO NguyenLieu (TenNguyenLieu, SoLuongTon, DonViTinh, GiaNhap, GhiChu, NgayNhap) VALUES (@Ten, @SoLuong, @DonVi, @GiaNhap, @GhiChu, @NgayNhap)";
                     cmd = new SqlCommand(query, conn);
                 }
                 else
                 {
                     string id = dgvNguyenLieu.CurrentRow.Cells["IDNguyenLieu"].Value.ToString();
-                    string query = "UPDATE NguyenLieu SET TenNguyenLieu=@Ten, SoLuongTon=@SoLuong, DonViTinh=@DonVi, GhiChu=@GhiChu WHERE IDNguyenLieu=@id";
+                    string query = "UPDATE NguyenLieu SET TenNguyenLieu=@Ten, SoLuongTon=@SoLuong, DonViTinh=@DonVi, GiaNhap=@GiaNhap, GhiChu=@GhiChu, NgayNhap=@NgayNhap WHERE IDNguyenLieu=@id";
                     cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@id", id);
                 }
@@ -149,7 +174,10 @@ namespace QuanLyNhaHang
                 cmd.Parameters.AddWithValue("@Ten", txtTenNguyenLieu.Text);
                 cmd.Parameters.AddWithValue("@SoLuong", int.Parse(txtSoLuongTon.Text));
                 cmd.Parameters.AddWithValue("@DonVi", txtDonViTinh.Text);
+                cmd.Parameters.AddWithValue("@GiaNhap", decimal.Parse(txtGiaNhap.Text));
                 cmd.Parameters.AddWithValue("@GhiChu", txtGhiChu.Text);
+                cmd.Parameters.AddWithValue("@NgayNhap", dtpNgayNhap.Value.Date);
+
                 cmd.ExecuteNonQuery();
             }
 
@@ -168,7 +196,9 @@ namespace QuanLyNhaHang
             txtTenNguyenLieu.Text = "";
             txtSoLuongTon.Text = "";
             txtDonViTinh.Text = "";
+            txtGiaNhap.Text = "";
             txtGhiChu.Text = "";
+            dtpNgayNhap.Value = DateTime.Now;
         }
 
         private void SetButtonState()
@@ -204,13 +234,17 @@ namespace QuanLyNhaHang
                 MessageBox.Show("Số lượng tồn phải là số nguyên.");
                 return false;
             }
+            if (!decimal.TryParse(txtGiaNhap.Text, out _))
+            {
+                MessageBox.Show("Giá nhập phải là số hợp lệ.");
+                return false;
+            }
             return true;
         }
+
         private void FormNguyenLieu_Load(object sender, EventArgs e)
         {
-            // Nếu bạn muốn load lại dữ liệu từ đây:
             LoadData();
         }
-
     }
 }

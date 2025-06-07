@@ -4,7 +4,6 @@ using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
 
-#nullable enable
 namespace QuanLyNhaHang
 {
     public partial class FormQuanLyBan : Form
@@ -15,6 +14,7 @@ namespace QuanLyNhaHang
         {
             InitializeComponent();
 
+            // Chỉ thêm 3 trạng thái mong muốn cho combobox
             cmbTrangThai.Items.AddRange(new string[] { "Trống", "Có người", "Đã đặt" });
 
             LoadDanhSachBan();
@@ -22,9 +22,10 @@ namespace QuanLyNhaHang
             btnThemBan.Click += BtnThemBan_Click;
             btnSuaBan.Click += BtnSuaBan_Click;
             btnXoaBan.Click += BtnXoaBan_Click;
+            btnLamMoi.Click += btnLamMoi_Click; // Thêm sự kiện cho nút làm mới
         }
 
-        private void LoadDanhSachBan()
+        public void LoadDanhSachBan()
         {
             flpBanAn.Controls.Clear();
 
@@ -207,6 +208,64 @@ namespace QuanLyNhaHang
             {
                 MessageBox.Show("Lỗi kết nối cơ sở dữ liệu: " + ex.Message);
             }
+        }
+
+        // Hàm cập nhật trạng thái bàn theo số bàn và trạng thái mới
+        public void CapNhatTrangThaiBanTheoSoBan(string soBan, string trangThaiMoi)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(connectionString);
+                conn.Open();
+
+                string query = "UPDATE BanAn SET TrangThai = @TrangThai WHERE SoBan = @SoBan";
+                using SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@TrangThai", trangThaiMoi);
+                cmd.Parameters.AddWithValue("@SoBan", soBan);
+
+                cmd.ExecuteNonQuery();
+
+                LoadDanhSachBan();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khi cập nhật trạng thái bàn: " + ex.Message);
+            }
+        }
+
+        // Hàm cập nhật trạng thái bàn theo IDBanAn (thêm mới)
+        public void CapNhatTrangThaiBanTheoIDBanAn(int idBanAn, string trangThai)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE BanAn SET TrangThai = @TrangThai WHERE IDBanAn = @IDBanAn";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@TrangThai", trangThai);
+                cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+                conn.Close();
+            }
+
+            // Load lại danh sách bàn để cập nhật UI
+            LoadDanhSachBan();
+        }
+
+        private void btnLamMoi_Click(object sender, EventArgs e)
+        {
+            // Xóa text ở textbox Mã số bàn
+            txtMaSoBan.Clear();
+
+            // Reset trạng thái combobox về chưa chọn
+            cmbTrangThai.SelectedIndex = -1;
+
+            // Tải lại danh sách bàn, để refresh hiển thị mới nhất
+            LoadDanhSachBan();
+        }
+
+        private void FormQuanLyBan_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

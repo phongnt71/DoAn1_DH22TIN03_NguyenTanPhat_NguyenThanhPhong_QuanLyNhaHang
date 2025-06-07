@@ -36,6 +36,7 @@
             btnThemBan = new Button();
             btnSuaBan = new Button();
             btnXoaBan = new Button();
+            btnLamMoi = new Button();
             SuspendLayout();
             // 
             // txtMaSoBan
@@ -106,12 +107,23 @@
             btnXoaBan.Text = "Xóa bàn ";
             btnXoaBan.UseVisualStyleBackColor = true;
             // 
+            // btnLamMoi
+            // 
+            btnLamMoi.Location = new Point(315, 401);
+            btnLamMoi.Name = "btnLamMoi";
+            btnLamMoi.Size = new Size(94, 29);
+            btnLamMoi.TabIndex = 14;
+            btnLamMoi.Text = "Làm mới";
+            btnLamMoi.UseVisualStyleBackColor = true;
+            btnLamMoi.Click += btnLamMoi_Click;
+            // 
             // FormQuanLyBan
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnLamMoi);
             Controls.Add(btnXoaBan);
             Controls.Add(btnSuaBan);
             Controls.Add(btnThemBan);
@@ -121,7 +133,9 @@
             Controls.Add(txtMaSoBan);
             Controls.Add(label1);
             Name = "FormQuanLyBan";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FormQuanLyBan";
+            Load += FormQuanLyBan_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -135,5 +149,6 @@
         private Button btnThemBan;
         private Button btnSuaBan;
         private Button btnXoaBan;
+        private Button btnLamMoi;
     }
 }

@@ -8,34 +8,99 @@ namespace QuanLyNhaHang
 {
     public partial class FormTaoHoaDon : Form
     {
+        private int currentIdHoaDon = -1;
         private string connectionString = @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;Trust Server Certificate=True";
         private DataTable dtChiTietHD;
 
         public FormTaoHoaDon()
         {
             InitializeComponent();
-
+            LoadBanDatTruoc();
             this.Load += FormTaoHoaDon_Load;
             btnThem.Click += btnThem_Click;
             btnXoa.Click += btnXoa_Click;
             btnSua.Click += btnSua_Click;
             btnLuu.Click += btnLuu_Click;
             btnHuy.Click += btnHuy_Click;
-
+            chkMangVe.CheckedChanged += chkMangVe_CheckedChanged;
         }
 
+        // Cập nhật nguyên liệu sau khi lưu hóa đơn thành công
+        private void CapNhatNguyenLieuSauKhiTaoHoaDon(int idHoaDon)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
 
+                string queryChiTiet = @"
+                    SELECT ct.IDMonAn, ct.SoLuong
+                    FROM ChiTietHoaDon ct
+                    WHERE ct.IDHoaDon = @IDHoaDon";
+
+                SqlCommand cmdChiTiet = new SqlCommand(queryChiTiet, conn);
+                cmdChiTiet.Parameters.AddWithValue("@IDHoaDon", idHoaDon);
+
+                SqlDataReader reader = cmdChiTiet.ExecuteReader();
+
+                DataTable dtChiTiet = new DataTable();
+                dtChiTiet.Load(reader);
+
+                reader.Close();
+
+                foreach (DataRow row in dtChiTiet.Rows)
+                {
+                    int idMonAn = Convert.ToInt32(row["IDMonAn"]);
+                    int soLuongMonAn = Convert.ToInt32(row["SoLuong"]);
+
+                    // Sửa trường cập nhật thành SoLuongTon đúng với database
+                    string queryTruNguyenLieu = @"
+                        UPDATE NguyenLieu
+                        SET SoLuongTon = SoLuongTon - (ctnl.SoLuongDung * @SoLuongMonAn)
+                        FROM ChiTietNguyenLieuMonAn ctnl
+                        WHERE NguyenLieu.IDNguyenLieu = ctnl.IDNguyenLieu
+                        AND ctnl.IDMonAn = @IDMonAn";
+
+                    SqlCommand cmdTruNguyenLieu = new SqlCommand(queryTruNguyenLieu, conn);
+                    cmdTruNguyenLieu.Parameters.AddWithValue("@SoLuongMonAn", soLuongMonAn);
+                    cmdTruNguyenLieu.Parameters.AddWithValue("@IDMonAn", idMonAn);
+
+                    cmdTruNguyenLieu.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+        }
+
+        private void chkMangVe_CheckedChanged(object sender, EventArgs e)
+        {
+            if (chkMangVe.Checked)
+            {
+                cmbSoBan.Enabled = false;
+                cmbSoBan.SelectedIndex = -1;
+                cmbSoBan.Text = "";
+
+                cmbBanDatTruoc.Enabled = false;
+                cmbBanDatTruoc.SelectedIndex = -1;
+                cmbBanDatTruoc.Text = "";
+            }
+            else
+            {
+                cmbSoBan.Enabled = true;
+                cmbBanDatTruoc.Enabled = true;
+            }
+        }
+
+        // Kiểm tra nguyên liệu đủ cho món ăn chưa
         private bool KiemTraNguyenLieuDu(int idMonAn, int soLuongMon)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
 
-                // Lấy danh sách nguyên liệu và số lượng cần dùng
                 string query = @"
-                SELECT ct.IDNguyenLieu, (ct.SoLuongDung * @SoLuongMon) AS TongSoLuongCan
-                FROM ChiTietNguyenLieuMonAn ct
-                WHERE ct.IDMonAn = @IDMonAn";
+            SELECT ct.IDNguyenLieu, (ct.SoLuongDung * @SoLuongMon) AS TongSoLuongCan
+            FROM ChiTietNguyenLieuMonAn ct
+            WHERE ct.IDMonAn = @IDMonAn";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@IDMonAn", idMonAn);
@@ -48,7 +113,6 @@ namespace QuanLyNhaHang
                         int idNguyenLieu = (int)reader["IDNguyenLieu"];
                         decimal soLuongCan = (decimal)reader["TongSoLuongCan"];
 
-                        // Kiểm tra số lượng trong kho
                         decimal soLuongTrongKho = 0m;
                         using (SqlConnection conn2 = new SqlConnection(connectionString))
                         {
@@ -62,14 +126,30 @@ namespace QuanLyNhaHang
 
                         if (soLuongTrongKho < soLuongCan)
                         {
-                            return false; // Không đủ nguyên liệu
+                            return false;
                         }
                     }
                 }
             }
-            return true; // Nguyên liệu đủ
+            return true;
         }
 
+        private void LoadBanDatTruoc()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT IDBanAn, SoBan FROM BanAn WHERE TrangThai = N'Đã đặt'";
+                SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                cmbBanDatTruoc.DataSource = dt;
+                cmbBanDatTruoc.DisplayMember = "SoBan";
+                cmbBanDatTruoc.ValueMember = "IDBanAn";
+                cmbBanDatTruoc.SelectedIndex = -1;
+            }
+        }
 
         private void LoadSoBan()
         {
@@ -89,6 +169,7 @@ namespace QuanLyNhaHang
                 cmbSoBan.Text = "";
             }
         }
+
         private void FormTaoHoaDon_Load(object sender, EventArgs e)
         {
             InitDataTable();
@@ -97,6 +178,7 @@ namespace QuanLyNhaHang
             LoadSoBan();
             dtpNgayLap.Value = DateTime.Now;
             txtMaHoaDon.Text = GenerateInvoiceCode();
+            cmbBanDatTruoc.SelectedIndexChanged += cmbBanDatTruoc_SelectedIndexChanged;
         }
 
         private void InitDataTable()
@@ -111,6 +193,29 @@ namespace QuanLyNhaHang
             dtgvChiTietHD.DataSource = dtChiTietHD;
         }
 
+        private void cmbBanDatTruoc_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbBanDatTruoc.SelectedValue != null && int.TryParse(cmbBanDatTruoc.SelectedValue.ToString(), out int idBanAn))
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = @"SELECT k.TenKH
+                             FROM DatBan d
+                             JOIN KhachHang k ON d.IDKhachHang = k.IDKhachHang
+                             WHERE d.IDBanAn = @IDBanAn AND d.TrangThai = N'Đã đặt'";
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
+                    var result = cmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        txtKhachHang.Text = result.ToString();
+                        cmbSoBan.SelectedValue = idBanAn;
+                    }
+                }
+            }
+        }
+
         private void LoadNhanVien()
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -121,7 +226,7 @@ namespace QuanLyNhaHang
                 daNV.Fill(dtNV);
 
                 cmbNhanVien.DataSource = dtNV;
-                cmbNhanVien.DisplayMember = "TenNV";  // Hiển thị đúng cột tên nhân viên
+                cmbNhanVien.DisplayMember = "TenNV";
                 cmbNhanVien.ValueMember = "IDNhanVien";
             }
         }
@@ -153,7 +258,7 @@ namespace QuanLyNhaHang
                 cmd.Parameters.AddWithValue("@prefix", prefix);
                 int count = (int)cmd.ExecuteScalar();
 
-                return prefix + (count + 1).ToString("D3");  // VD: HD20250525_001
+                return prefix + (count + 1).ToString("D3");
             }
         }
 
@@ -183,14 +288,12 @@ namespace QuanLyNhaHang
             int idMonAn = (int)cmbMonAn.SelectedValue;
             int soLuong = (int)nudSoLuong.Value;
 
-            // Kiểm tra nguyên liệu
             if (!KiemTraNguyenLieuDu(idMonAn, soLuong))
             {
                 MessageBox.Show("Nguyên liệu không đủ để phục vụ món này.");
                 return;
             }
 
-            // Phần thêm món bình thường
             string tenMon = cmbMonAn.Text;
             decimal donGia = (decimal)((DataRowView)cmbMonAn.SelectedItem)["GiaTien"];
 
@@ -206,7 +309,6 @@ namespace QuanLyNhaHang
 
             TinhTongTien();
         }
-
 
         private void btnXoa_Click(object sender, EventArgs e)
         {
@@ -249,7 +351,6 @@ namespace QuanLyNhaHang
             }
         }
 
-        // Kiểm tra khách hàng đã có chưa
         private int? GetKhachHangIdByName(string tenKhachHang)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -303,7 +404,6 @@ namespace QuanLyNhaHang
                 }
             }
 
-            // Tiếp tục lưu hóa đơn với idKhachHang.Value
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -313,9 +413,21 @@ namespace QuanLyNhaHang
                 {
                     string maHoaDon = txtMaHoaDon.Text;
 
-                    string insertHD = @"INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon)
-                        VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon);
-                        SELECT SCOPE_IDENTITY();";
+                    // Lấy giá trị số bàn
+                    int? idBan = null;
+
+                    if (!chkMangVe.Checked)
+                    {
+                        if (cmbBanDatTruoc.SelectedValue != null)
+                            idBan = (int)cmbBanDatTruoc.SelectedValue;
+                        else if (cmbSoBan.SelectedValue != null)
+                            idBan = (int)cmbSoBan.SelectedValue;
+                    }
+
+                    string insertHD = @"INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan)
+                                VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan);
+                                SELECT SCOPE_IDENTITY();";
+
                     SqlCommand cmdHD = new SqlCommand(insertHD, conn, transaction);
                     cmdHD.Parameters.AddWithValue("@IDNhanVien", cmbNhanVien.SelectedValue);
                     cmdHD.Parameters.AddWithValue("@IDKhachHang", idKhachHang.Value);
@@ -323,13 +435,14 @@ namespace QuanLyNhaHang
                     cmdHD.Parameters.AddWithValue("@TongTien", decimal.Parse(txtTongTien.Text));
                     cmdHD.Parameters.AddWithValue("@TrangThai", "Chưa thanh toán");
                     cmdHD.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
+                    cmdHD.Parameters.AddWithValue("@SoBan", (object)idBan ?? DBNull.Value);
 
                     int newIDHoaDon = Convert.ToInt32(cmdHD.ExecuteScalar());
 
                     foreach (DataRow row in dtChiTietHD.Rows)
                     {
                         string insertCTHD = @"INSERT INTO ChiTietHoaDon (IDHoaDon, IDMonAn, SoLuong, DonGia)
-                              VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
+                  VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
                         SqlCommand cmdCTHD = new SqlCommand(insertCTHD, conn, transaction);
                         cmdCTHD.Parameters.AddWithValue("@IDHoaDon", newIDHoaDon);
                         cmdCTHD.Parameters.AddWithValue("@IDMonAn", (int)row["IDMonAn"]);
@@ -339,33 +452,41 @@ namespace QuanLyNhaHang
                         cmdCTHD.ExecuteNonQuery();
                     }
 
-                    // --- Phần thêm mới: cập nhật trạng thái bàn ---
-                    if (cmbSoBan.SelectedValue != null)
+                    if (!chkMangVe.Checked)
                     {
-                        int idBan = (int)cmbSoBan.SelectedValue;
-                        string updateBan = "UPDATE BanAn SET TrangThai = 'Có người' WHERE IDBanAn = @IDBanAn";
-                        SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
-                        cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan);
-                        cmdUpdateBan.ExecuteNonQuery();
+                        if (idBan.HasValue)
+                        {
+                            string updateBan = "UPDATE BanAn SET TrangThai = N'Có người' WHERE IDBanAn = @IDBanAn";
+                            SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
+                            cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan.Value);
+                            cmdUpdateBan.ExecuteNonQuery();
+                        }
                     }
-                    // --- Kết thúc phần cập nhật trạng thái bàn ---
 
                     transaction.Commit();
+
+                    // Cập nhật nguyên liệu sau khi lưu hóa đơn thành công
+                    CapNhatNguyenLieuSauKhiTaoHoaDon(newIDHoaDon);
+
                     MessageBox.Show("Lưu hóa đơn thành công!");
                     dtChiTietHD.Clear();
                     txtTongTien.Text = "0";
                     txtKhachHang.Text = "";
                     txtMaHoaDon.Text = GenerateInvoiceCode();
-
-                    LoadSoBan(); // Load lại danh sách bàn còn trống (nếu có hàm này)
+                    LoadSoBan();
                 }
                 catch (Exception ex)
                 {
-                    transaction.Rollback();
+                    try
+                    {
+                        transaction.Rollback();
+                    }
+                    catch { }
                     MessageBox.Show("Lỗi khi lưu hóa đơn: " + ex.Message);
                 }
             }
         }
+
 
         private void btnHuy_Click(object sender, EventArgs e)
         {

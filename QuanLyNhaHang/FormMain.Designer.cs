@@ -36,11 +36,11 @@
             nguyênLiệuToolStripMenuItem = new ToolStripMenuItem();
             hóaĐơnToolStripMenuItem = new ToolStripMenuItem();
             tạoMớiHóaĐơnToolStripMenuItem = new ToolStripMenuItem();
+            danhSáchHóaĐơnToolStripMenuItem = new ToolStripMenuItem();
             kháchHàngToolStripMenuItem = new ToolStripMenuItem();
             nhânViênToolStripMenuItem = new ToolStripMenuItem();
             báoCáoToolStripMenuItem = new ToolStripMenuItem();
             càiĐặtToolStripMenuItem = new ToolStripMenuItem();
-            danhSáchHóaĐơnToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -64,15 +64,16 @@
             // quảnLíBànToolStripMenuItem
             // 
             quảnLíBànToolStripMenuItem.Name = "quảnLíBànToolStripMenuItem";
-            quảnLíBànToolStripMenuItem.Size = new Size(224, 26);
+            quảnLíBànToolStripMenuItem.Size = new Size(168, 26);
             quảnLíBànToolStripMenuItem.Text = "Quản lí bàn";
             quảnLíBànToolStripMenuItem.Click += quảnLíBànToolStripMenuItem_Click;
             // 
             // đặtBànToolStripMenuItem
             // 
             đặtBànToolStripMenuItem.Name = "đặtBànToolStripMenuItem";
-            đặtBànToolStripMenuItem.Size = new Size(224, 26);
+            đặtBànToolStripMenuItem.Size = new Size(168, 26);
             đặtBànToolStripMenuItem.Text = "Đặt bàn";
+            đặtBànToolStripMenuItem.Click += đặtBànToolStripMenuItem_Click;
             // 
             // mónĂnToolStripMenuItem
             // 
@@ -98,9 +99,16 @@
             // tạoMớiHóaĐơnToolStripMenuItem
             // 
             tạoMớiHóaĐơnToolStripMenuItem.Name = "tạoMớiHóaĐơnToolStripMenuItem";
-            tạoMớiHóaĐơnToolStripMenuItem.Size = new Size(224, 26);
+            tạoMớiHóaĐơnToolStripMenuItem.Size = new Size(219, 26);
             tạoMớiHóaĐơnToolStripMenuItem.Text = "Tạo mới hóa đơn";
             tạoMớiHóaĐơnToolStripMenuItem.Click += tạoMớiHóaĐơnToolStripMenuItem_Click;
+            // 
+            // danhSáchHóaĐơnToolStripMenuItem
+            // 
+            danhSáchHóaĐơnToolStripMenuItem.Name = "danhSáchHóaĐơnToolStripMenuItem";
+            danhSáchHóaĐơnToolStripMenuItem.Size = new Size(219, 26);
+            danhSáchHóaĐơnToolStripMenuItem.Text = "Danh sách hóa đơn";
+            danhSáchHóaĐơnToolStripMenuItem.Click += danhSáchHóaĐơnToolStripMenuItem_Click;
             // 
             // kháchHàngToolStripMenuItem
             // 
@@ -114,24 +122,20 @@
             nhânViênToolStripMenuItem.Name = "nhânViênToolStripMenuItem";
             nhânViênToolStripMenuItem.Size = new Size(89, 24);
             nhânViênToolStripMenuItem.Text = "Nhân viên";
+            nhânViênToolStripMenuItem.Click += nhânViênToolStripMenuItem_Click;
             // 
             // báoCáoToolStripMenuItem
             // 
             báoCáoToolStripMenuItem.Name = "báoCáoToolStripMenuItem";
             báoCáoToolStripMenuItem.Size = new Size(79, 24);
             báoCáoToolStripMenuItem.Text = "Báo Cáo";
+            báoCáoToolStripMenuItem.Click += báoCáoToolStripMenuItem_Click;
             // 
             // càiĐặtToolStripMenuItem
             // 
             càiĐặtToolStripMenuItem.Name = "càiĐặtToolStripMenuItem";
             càiĐặtToolStripMenuItem.Size = new Size(70, 24);
             càiĐặtToolStripMenuItem.Text = "Cài đặt";
-            // 
-            // danhSáchHóaĐơnToolStripMenuItem
-            // 
-            danhSáchHóaĐơnToolStripMenuItem.Name = "danhSáchHóaĐơnToolStripMenuItem";
-            danhSáchHóaĐơnToolStripMenuItem.Size = new Size(224, 26);
-            danhSáchHóaĐơnToolStripMenuItem.Text = "Danh sách hóa đơn";
             // 
             // FormMain
             // 
@@ -141,6 +145,7 @@
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             Name = "FormMain";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FormMain";
             Load += FormMain_Load;
             menuStrip1.ResumeLayout(false);

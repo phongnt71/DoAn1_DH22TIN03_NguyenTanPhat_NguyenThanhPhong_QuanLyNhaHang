@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
-#nullable enable
 
 namespace QuanLyNhaHang
 {
@@ -14,39 +13,36 @@ namespace QuanLyNhaHang
             InitializeComponent();
             this.Load += FormLogin_Load;
 
-            // Bắt sự kiện nhấn phím trong txtPassword
             txtUsername.KeyDown += TxtUsername_KeyDown;
             txtPassword.KeyDown += TxtPassword_KeyDown;
         }
 
-        // Khi ở txtUsername, nhấn Enter sẽ chuyển sang txtPassword
-        private void TxtUsername_KeyDown(object? sender, KeyEventArgs e)
+        private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true; // tránh tiếng bip
-                txtPassword.Focus();       // chuyển con trỏ xuống mật khẩu
+                e.SuppressKeyPress = true;
+                txtPassword.Focus();
             }
         }
 
-        // Khi ở txtPassword, nhấn Enter sẽ đăng nhập
-        private void TxtPassword_KeyDown(object? sender, KeyEventArgs e)
+        private void TxtPassword_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true; // tránh tiếng bip
-                BtnLogin_Click(sender, EventArgs.Empty); // gọi nút đăng nhập với EventArgs.Empty
+                e.SuppressKeyPress = true;
+                BtnLogin_Click(sender, EventArgs.Empty);
             }
         }
 
-        private void FormLogin_Load(object? sender, EventArgs e)
+        private void FormLogin_Load(object sender, EventArgs e)
         {
             txtUsername.Clear();
             txtPassword.Clear();
             txtUsername.Focus();
         }
 
-        private void BtnLogin_Click(object? sender, EventArgs e)
+        private void BtnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text.Trim();
@@ -64,15 +60,16 @@ namespace QuanLyNhaHang
                 return;
             }
 
-            if (IsLoginValid(username, password))
+            string role = GetUserRole(username, password);
+            if (!string.IsNullOrEmpty(role))
             {
-                // Đăng nhập thành công
-                this.Hide(); // Ẩn form login
+                this.Hide();
 
                 FormMain mainForm = new FormMain();
-                mainForm.ShowDialog(); // Hiện form chính dạng modal
+                mainForm.QuyenHienTai = role;  // Truyền quyền sang FormMain
+                mainForm.ShowDialog();
 
-                this.Close(); // Đóng form login sau khi form chính đóng
+                this.Close();
             }
             else
             {
@@ -82,10 +79,10 @@ namespace QuanLyNhaHang
             }
         }
 
-        private bool IsLoginValid(string username, string password)
+        private string GetUserRole(string username, string password)
         {
-            bool isValid = false;
-            string query = "SELECT COUNT(*) FROM NhanVien WHERE TaiKhoan=@username AND MatKhau=@password";
+            string role = "";
+            string query = "SELECT Quyen FROM NhanVien WHERE TaiKhoan=@username AND MatKhau=@password";
 
             using SqlConnection conn = new SqlConnection(connectionString);
             using SqlCommand cmd = new SqlCommand(query, conn);
@@ -96,18 +93,21 @@ namespace QuanLyNhaHang
             try
             {
                 conn.Open();
-                int count = (int)cmd.ExecuteScalar()!;
-                isValid = count > 0;
+                object result = cmd.ExecuteScalar();
+                if (result != null)
+                {
+                    role = result.ToString();
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi kết nối cơ sở dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            return isValid;
+            return role;
         }
 
-        private void BtnExit_Click(object? sender, EventArgs e)
+        private void BtnExit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }

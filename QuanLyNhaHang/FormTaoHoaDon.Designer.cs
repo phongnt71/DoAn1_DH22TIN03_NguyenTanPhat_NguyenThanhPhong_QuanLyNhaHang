@@ -229,7 +229,7 @@
             // cmbSoBan
             // 
             cmbSoBan.FormattingEnabled = true;
-            cmbSoBan.Location = new Point(519, 12);
+            cmbSoBan.Location = new Point(532, 11);
             cmbSoBan.Name = "cmbSoBan";
             cmbSoBan.Size = new Size(107, 28);
             cmbSoBan.TabIndex = 21;
@@ -246,7 +246,7 @@
             // chkMangVe
             // 
             chkMangVe.AutoSize = true;
-            chkMangVe.Location = new Point(412, 98);
+            chkMangVe.Location = new Point(645, 10);
             chkMangVe.Name = "chkMangVe";
             chkMangVe.Size = new Size(88, 24);
             chkMangVe.TabIndex = 22;
@@ -256,7 +256,7 @@
             // cmbBanDatTruoc
             // 
             cmbBanDatTruoc.FormattingEnabled = true;
-            cmbBanDatTruoc.Location = new Point(519, 48);
+            cmbBanDatTruoc.Location = new Point(532, 47);
             cmbBanDatTruoc.Name = "cmbBanDatTruoc";
             cmbBanDatTruoc.Size = new Size(107, 28);
             cmbBanDatTruoc.TabIndex = 24;
@@ -301,6 +301,7 @@
             Controls.Add(cmbNhanVien);
             Controls.Add(label1);
             Name = "FormTaoHoaDon";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FormTaoHoaDon";
             Load += FormTaoHoaDon_Load;
             ((System.ComponentModel.ISupportInitialize)nudSoLuong).EndInit();
