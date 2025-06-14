@@ -88,13 +88,22 @@ namespace QuanLyNhaHang
             if (dtgvMonAn.SelectedRows.Count > 0)
             {
                 DataGridViewRow row = dtgvMonAn.SelectedRows[0];
+
                 txtTenMon.Text = row.Cells["TenMon"].Value?.ToString();
                 cmbLoaiMon.SelectedItem = row.Cells["LoaiMon"].Value?.ToString();
                 txtGiaTien.Text = row.Cells["GiaTien"].Value?.ToString();
                 txtMoTa.Text = row.Cells["MoTa"].Value?.ToString();
 
-                int idMonAn = Convert.ToInt32(row.Cells["IDMonAn"].Value);
-                LoadNguyenLieuTheoMonAn(idMonAn);
+                object value = row.Cells["IDMonAn"].Value;
+                if (value != DBNull.Value && value != null && int.TryParse(value.ToString(), out int idMonAn))
+                {
+                    LoadNguyenLieuTheoMonAn(idMonAn);
+                }
+                else
+                {
+                    ClearInputFields();
+                    dtgvNguyenLieu.DataSource = null;
+                }
             }
             else
             {
@@ -102,6 +111,7 @@ namespace QuanLyNhaHang
                 dtgvNguyenLieu.DataSource = null;
             }
         }
+
 
         private void InitControls()
         {
@@ -435,7 +445,7 @@ namespace QuanLyNhaHang
         }
         private void txtGiaTien_TextChanged(object sender, EventArgs e)
         {
-            // Bạn có thể để trống nếu chưa cần xử lý gì
+            
         }
 
     }

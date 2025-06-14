@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\delicious-food-buffet-bottom-focus.jpg" />
+    <None Remove="Images\delicious-food-buffet-cropped-16x9.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
 	  <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
 	  <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
 	  <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
@@ -28,6 +33,11 @@
 			<WrapperTool>primary</WrapperTool>
 			<Isolated>false</Isolated>
 		</COMReference>
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="Images\delicious-food-buffet-bottom-focus.jpg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Update="FormBaoCao.cs">

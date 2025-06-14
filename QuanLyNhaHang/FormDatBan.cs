@@ -7,14 +7,12 @@ namespace QuanLyNhaHang
 {
     public partial class FormDatBan : Form
     {
-        private string connectionString = @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;Trust Server Certificate=True";
+        private string connectionString = @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;TrustServerCertificate=True";
 
         public FormDatBan()
         {
             InitializeComponent();
-
             this.Load += FormDatBan_Load;
-
             dtgvDatBan.CellClick += DtgvDatBan_CellClick;
         }
 
@@ -56,8 +54,6 @@ namespace QuanLyNhaHang
                 da.Fill(dt);
 
                 dtgvDatBan.DataSource = dt;
-
-                // Tùy chọn hiển thị các cột cho đẹp hơn
                 dtgvDatBan.Columns["IDDatBan"].Visible = false;
                 dtgvDatBan.Columns["TrangThai"].Visible = false;
                 dtgvDatBan.Columns["SoBan"].HeaderText = "Số bàn";
@@ -85,9 +81,15 @@ namespace QuanLyNhaHang
             int idBanAn = (int)cmbBanAn.SelectedValue;
             DateTime ngayDat = dtpNgayDat.Value.Date;
             DateTime gioDat = dtpGioDat.Value;
+            DateTime thoiGianDat = ngayDat.Add(gioDat.TimeOfDay);
+
+            if (thoiGianDat < DateTime.Now)
+            {
+                MessageBox.Show("Không thể đặt bàn ở thời điểm trong quá khứ.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             int? idKhachHang = GetKhachHangIdByName(tenKhachHang);
-
             if (idKhachHang == null)
             {
                 DialogResult dr = MessageBox.Show("Khách hàng chưa tồn tại. Bạn có muốn thêm khách hàng mới không?", "Thông báo", MessageBoxButtons.YesNo);
@@ -119,16 +121,13 @@ namespace QuanLyNhaHang
 
                 string insert = @"INSERT INTO DatBan (IDBanAn, IDKhachHang, NgayDat, GioDat, TrangThai)
                                   VALUES (@IDBanAn, @IDKhachHang, @NgayDat, @GioDat, N'Đã đặt')";
-
                 SqlCommand cmd = new SqlCommand(insert, conn);
                 cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
                 cmd.Parameters.AddWithValue("@IDKhachHang", idKhachHang.Value);
                 cmd.Parameters.AddWithValue("@NgayDat", ngayDat);
                 cmd.Parameters.AddWithValue("@GioDat", gioDat);
-
                 cmd.ExecuteNonQuery();
 
-                // Cập nhật trạng thái bàn sang "Đã đặt"
                 string updateBan = "UPDATE BanAn SET TrangThai = N'Đã đặt' WHERE IDBanAn = @IDBanAn";
                 SqlCommand cmdUpdate = new SqlCommand(updateBan, conn);
                 cmdUpdate.Parameters.AddWithValue("@IDBanAn", idBanAn);
@@ -167,6 +166,13 @@ namespace QuanLyNhaHang
             int newIdBanAn = (int)cmbBanAn.SelectedValue;
             DateTime ngayDat = dtpNgayDat.Value.Date;
             DateTime gioDat = dtpGioDat.Value;
+            DateTime thoiGianDat = ngayDat.Add(gioDat.TimeOfDay);
+
+            if (thoiGianDat < DateTime.Now)
+            {
+                MessageBox.Show("Thời gian đặt không hợp lệ. Vui lòng chọn thời điểm hiện tại hoặc trong tương lai.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             int? idKhachHang = GetKhachHangIdByName(tenKhachHang);
             if (idKhachHang == null)
@@ -179,36 +185,29 @@ namespace QuanLyNhaHang
             {
                 conn.Open();
 
-                // Lấy ID bàn hiện tại của đặt bàn này để cập nhật trạng thái
                 string queryCurrentBan = "SELECT IDBanAn FROM DatBan WHERE IDDatBan = @IDDatBan";
                 SqlCommand cmdCurrentBan = new SqlCommand(queryCurrentBan, conn);
                 cmdCurrentBan.Parameters.AddWithValue("@IDDatBan", idDatBan);
                 int currentIdBanAn = (int)cmdCurrentBan.ExecuteScalar();
 
-                // Cập nhật đặt bàn
                 string update = @"UPDATE DatBan 
                           SET IDBanAn = @IDBanAn, IDKhachHang = @IDKhachHang, NgayDat = @NgayDat, GioDat = @GioDat 
                           WHERE IDDatBan = @IDDatBan";
-
                 SqlCommand cmd = new SqlCommand(update, conn);
                 cmd.Parameters.AddWithValue("@IDDatBan", idDatBan);
                 cmd.Parameters.AddWithValue("@IDBanAn", newIdBanAn);
                 cmd.Parameters.AddWithValue("@IDKhachHang", idKhachHang.Value);
                 cmd.Parameters.AddWithValue("@NgayDat", ngayDat);
                 cmd.Parameters.AddWithValue("@GioDat", gioDat);
-
                 cmd.ExecuteNonQuery();
 
-                // Nếu bàn đặt mới khác bàn cũ thì cập nhật trạng thái 2 bàn
                 if (newIdBanAn != currentIdBanAn)
                 {
-                    // Cập nhật bàn mới thành 'Đã đặt'
                     string updateNewBan = "UPDATE BanAn SET TrangThai = N'Đã đặt' WHERE IDBanAn = @IDBanAn";
                     SqlCommand cmdUpdateNewBan = new SqlCommand(updateNewBan, conn);
                     cmdUpdateNewBan.Parameters.AddWithValue("@IDBanAn", newIdBanAn);
                     cmdUpdateNewBan.ExecuteNonQuery();
 
-                    // Cập nhật bàn cũ thành 'Trống'
                     string updateOldBan = "UPDATE BanAn SET TrangThai = N'Trống' WHERE IDBanAn = @IDBanAn";
                     SqlCommand cmdUpdateOldBan = new SqlCommand(updateOldBan, conn);
                     cmdUpdateOldBan.Parameters.AddWithValue("@IDBanAn", currentIdBanAn);
@@ -236,19 +235,16 @@ namespace QuanLyNhaHang
             {
                 conn.Open();
 
-                // Lấy ID bàn đang đặt để cập nhật trạng thái
                 string queryBan = "SELECT IDBanAn FROM DatBan WHERE IDDatBan = @IDDatBan";
                 SqlCommand cmdBan = new SqlCommand(queryBan, conn);
                 cmdBan.Parameters.AddWithValue("@IDDatBan", idDatBan);
                 int idBanAn = (int)cmdBan.ExecuteScalar();
 
-                // Xóa đặt bàn
                 string delete = "DELETE FROM DatBan WHERE IDDatBan = @IDDatBan";
                 SqlCommand cmd = new SqlCommand(delete, conn);
                 cmd.Parameters.AddWithValue("@IDDatBan", idDatBan);
                 cmd.ExecuteNonQuery();
 
-                // Cập nhật trạng thái bàn về "Trống"
                 string updateBan = "UPDATE BanAn SET TrangThai = N'Trống' WHERE IDBanAn = @IDBanAn";
                 SqlCommand cmdUpdate = new SqlCommand(updateBan, conn);
                 cmdUpdate.Parameters.AddWithValue("@IDBanAn", idBanAn);
@@ -266,11 +262,14 @@ namespace QuanLyNhaHang
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dtgvDatBan.Rows[e.RowIndex];
+                txtTenKhachHang.Text = row.Cells["TenKH"]?.Value?.ToString() ?? "";
+                cmbBanAn.Text = row.Cells["SoBan"]?.Value?.ToString() ?? "";
 
-                txtTenKhachHang.Text = row.Cells["TenKH"].Value.ToString();
-                cmbBanAn.Text = row.Cells["SoBan"].Value.ToString();
-                dtpNgayDat.Value = Convert.ToDateTime(row.Cells["NgayDat"].Value);
-                dtpGioDat.Value = dtpNgayDat.Value.Date.Add((TimeSpan)row.Cells["GioDat"].Value);
+                if (row.Cells["NgayDat"].Value != DBNull.Value)
+                    dtpNgayDat.Value = Convert.ToDateTime(row.Cells["NgayDat"].Value);
+
+                if (row.Cells["GioDat"].Value != DBNull.Value)
+                    dtpGioDat.Value = dtpNgayDat.Value.Date.Add((TimeSpan)row.Cells["GioDat"].Value);
             }
         }
 
@@ -282,12 +281,8 @@ namespace QuanLyNhaHang
                 string query = "SELECT IDKhachHang FROM KhachHang WHERE TenKH = @TenKH";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@TenKH", tenKhachHang);
-
                 var result = cmd.ExecuteScalar();
-                if (result != null)
-                    return Convert.ToInt32(result);
-                else
-                    return null;
+                return result != null ? Convert.ToInt32(result) : (int?)null;
             }
         }
 

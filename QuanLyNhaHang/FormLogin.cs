@@ -63,14 +63,18 @@ namespace QuanLyNhaHang
             string role = GetUserRole(username, password);
             if (!string.IsNullOrEmpty(role))
             {
+                Program.TaiKhoanDangNhap = username;
+                Program.VaiTroDangNhap = role;
+
                 this.Hide();
 
                 FormMain mainForm = new FormMain();
-                mainForm.QuyenHienTai = role;  // Truyền quyền sang FormMain
+                mainForm.QuyenHienTai = role;
                 mainForm.ShowDialog();
 
                 this.Close();
             }
+
             else
             {
                 MessageBox.Show("Tên đăng nhập hoặc mật khẩu không đúng!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -109,7 +113,18 @@ namespace QuanLyNhaHang
 
         private void BtnExit_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            DialogResult result = MessageBox.Show(
+                "Bạn có chắc chắn muốn thoát?",
+                "Xác nhận thoát",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
         }
+
     }
 }

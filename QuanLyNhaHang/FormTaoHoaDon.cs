@@ -370,6 +370,11 @@ namespace QuanLyNhaHang
 
         private void btnLuu_Click(object sender, EventArgs e)
         {
+            if ((cmbSoBan.SelectedIndex == -1 && cmbBanDatTruoc.SelectedIndex == -1) && !chkMangVe.Checked)
+            {
+                MessageBox.Show("Vui lòng chọn bàn hoặc tích vào 'Mang về' trước khi lưu hóa đơn.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             string tenKhachHang = txtKhachHang.Text.Trim();
             if (string.IsNullOrEmpty(tenKhachHang))
             {

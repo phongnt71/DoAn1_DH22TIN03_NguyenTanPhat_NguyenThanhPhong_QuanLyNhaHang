@@ -184,7 +184,6 @@
             btnXoa.TabIndex = 66;
             btnXoa.Text = "Xóa";
             btnXoa.UseVisualStyleBackColor = true;
-            btnXoa.Click += btnXoa_Click;
             // 
             // FormDSHoaDon
             // 
@@ -209,7 +208,7 @@
             Controls.Add(dtgvDSHoaDon);
             Name = "FormDSHoaDon";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "FormDSHoaDon";
+            Text = "p";
             Load += FormDSHoaDon_Load;
             ((System.ComponentModel.ISupportInitialize)picQR).EndInit();
             ((System.ComponentModel.ISupportInitialize)dtgvDSHoaDon).EndInit();

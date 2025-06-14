@@ -73,10 +73,62 @@ namespace QuanLyNhaHang
         {
             if (sender is Button clickedButton && clickedButton.Tag is DataRow row)
             {
-                txtMaSoBan.Text = row["SoBan"].ToString() ?? string.Empty;
-                cmbTrangThai.Text = row["TrangThai"].ToString() ?? string.Empty;
+                string soBan = row["SoBan"].ToString() ?? "";
+                string trangThai = row["TrangThai"].ToString() ?? "";
+
+                txtMaSoBan.Text = soBan;
+                cmbTrangThai.Text = trangThai;
+
+                if (trangThai == "Có người")
+                {
+                    int idHoaDon = LayHoaDonChuaThanhToanTheoSoBan(soBan);
+
+                    if (idHoaDon <= 0)
+                    {
+                        MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Cập nhật CSDL
+                        CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
+
+                        // ➕ Cập nhật lại chính nút đã click thay vì load toàn bộ lại
+                        clickedButton.Text = $"Bàn {soBan}\nTrống";
+                        clickedButton.BackColor = Color.Aqua;
+
+                        // Sửa lại Tag để cập nhật trạng thái mới cho lần click tiếp theo
+                        row["TrangThai"] = "Trống";
+                        clickedButton.Tag = row;
+
+                        return;
+                    }
+
+                    // Mở form và load chi tiết hóa đơn
+                    FormDSHoaDon frm = new FormDSHoaDon(this);
+                    frm.MdiParent = this.MdiParent;
+                    frm.Show();
+                    frm.BringToFront();
+                    frm.LoadChiTietTheoIDHoaDon(idHoaDon);
+                }
             }
         }
+
+        private int LayHoaDonChuaThanhToanTheoSoBan(string soBan)
+        {
+            using SqlConnection conn = new SqlConnection(connectionString);
+            string query = "SELECT TOP 1 IDHoaDon FROM HoaDon WHERE SoBan = (SELECT IDBanAn FROM BanAn WHERE SoBan = @SoBan) AND TrangThai = N'Chưa thanh toán'";
+
+            SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@SoBan", soBan);
+            conn.Open();
+
+            object result = cmd.ExecuteScalar();
+            conn.Close();
+
+            if (result != null && int.TryParse(result.ToString(), out int idHoaDon))
+                return idHoaDon;
+
+            return -1;
+        }
+
 
         private void BtnThemBan_Click(object? sender, EventArgs e)
         {
@@ -263,9 +315,5 @@ namespace QuanLyNhaHang
             LoadDanhSachBan();
         }
 
-        private void FormQuanLyBan_Load(object sender, EventArgs e)
-        {
-
-        }
     }
 }

@@ -41,6 +41,8 @@
             nhânViênToolStripMenuItem = new ToolStripMenuItem();
             báoCáoToolStripMenuItem = new ToolStripMenuItem();
             càiĐặtToolStripMenuItem = new ToolStripMenuItem();
+            tàiKhoảnToolStripMenuItem = new ToolStripMenuItem();
+            đăngXuấtToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -133,9 +135,24 @@
             // 
             // càiĐặtToolStripMenuItem
             // 
+            càiĐặtToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { tàiKhoảnToolStripMenuItem, đăngXuấtToolStripMenuItem });
             càiĐặtToolStripMenuItem.Name = "càiĐặtToolStripMenuItem";
             càiĐặtToolStripMenuItem.Size = new Size(70, 24);
             càiĐặtToolStripMenuItem.Text = "Cài đặt";
+            // 
+            // tàiKhoảnToolStripMenuItem
+            // 
+            tàiKhoảnToolStripMenuItem.Name = "tàiKhoảnToolStripMenuItem";
+            tàiKhoảnToolStripMenuItem.Size = new Size(160, 26);
+            tàiKhoảnToolStripMenuItem.Text = "Tài khoản";
+            tàiKhoảnToolStripMenuItem.Click += tàiKhoảnToolStripMenuItem_Click;
+            // 
+            // đăngXuấtToolStripMenuItem
+            // 
+            đăngXuấtToolStripMenuItem.Name = "đăngXuấtToolStripMenuItem";
+            đăngXuấtToolStripMenuItem.Size = new Size(160, 26);
+            đăngXuấtToolStripMenuItem.Text = "Đăng xuất";
+            đăngXuấtToolStripMenuItem.Click += đăngXuấtToolStripMenuItem_Click;
             // 
             // FormMain
             // 
@@ -169,5 +186,7 @@
         private ToolStripMenuItem đặtBànToolStripMenuItem;
         private ToolStripMenuItem tạoMớiHóaĐơnToolStripMenuItem;
         private ToolStripMenuItem danhSáchHóaĐơnToolStripMenuItem;
+        private ToolStripMenuItem tàiKhoảnToolStripMenuItem;
+        private ToolStripMenuItem đăngXuấtToolStripMenuItem;
     }
 }

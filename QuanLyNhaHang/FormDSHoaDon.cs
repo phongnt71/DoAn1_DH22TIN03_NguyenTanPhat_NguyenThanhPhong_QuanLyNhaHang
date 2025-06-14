@@ -221,42 +221,56 @@ namespace QuanLyNhaHang
 
         // Hàm in hóa đơn, cập nhật trạng thái, xóa hóa đơn giữ nguyên như bạn có
 
-        private async Task TaoHoaDonWordAsync(string filePath, string maHoaDon, string tenKhachHang, DateTime ngayLap, string tenNhanVien, decimal tongTien, string urlQr)
+        private async Task TaoHoaDonWordAsync(string filePath, string maHoaDon, string tenKhachHang,
+    DateTime ngayLap, string tenNhanVien, decimal tongTien, Image qrImage)
         {
-            using WordprocessingDocument wordDoc = WordprocessingDocument.Create(filePath, WordprocessingDocumentType.Document);
-            MainDocumentPart mainPart = wordDoc.AddMainDocumentPart();
-            mainPart.Document = new Document();
-            Body body = mainPart.Document.AppendChild(new Body());
-
-            void ThemDoan(string text, bool bold = false, JustificationValues? justify = null)
+            using MemoryStream memStream = new MemoryStream();
+            using (WordprocessingDocument wordDoc = WordprocessingDocument.Create(memStream, WordprocessingDocumentType.Document, true))
             {
-                var actualJustify = justify ?? JustificationValues.Left;
-                Paragraph para = new Paragraph();
-                Run run = new Run();
-                if (bold)
-                    run.AppendChild(new Bold());
-                run.AppendChild(new Text(text));
-                para.AppendChild(run);
-                para.AppendChild(new ParagraphProperties(new Justification() { Val = actualJustify }));
-                body.AppendChild(para);
+                MainDocumentPart mainPart = wordDoc.AddMainDocumentPart();
+                mainPart.Document = new Document();
+                Body body = mainPart.Document.AppendChild(new Body());
+
+                void ThemDoan(string text, bool bold = false, JustificationValues? justify = null)
+                {
+                    var actualJustify = justify ?? JustificationValues.Left;
+                    Run run = new Run(new Text(text));
+                    if (bold) run.PrependChild(new Bold());
+                    Paragraph para = new Paragraph(run);
+                    para.ParagraphProperties = new ParagraphProperties(new Justification() { Val = actualJustify });
+                    body.AppendChild(para);
+                }
+
+                ThemDoan("HÓA ĐƠN BÁN HÀNG", true, JustificationValues.Center);
+                ThemDoan($"Mã hóa đơn: {maHoaDon}", true);
+                ThemDoan($"Tên khách hàng: {tenKhachHang}");
+                ThemDoan($"Ngày lập: {ngayLap:dd/MM/yyyy}");
+                ThemDoan($"Tên nhân viên: {tenNhanVien}");
+                ThemDoan($"Tổng tiền: {tongTien:N0} VND");
+                body.AppendChild(new Paragraph(new Run(new Text("")))); // dòng trống
+
+                if (qrImage != null)
+                {
+                    using MemoryStream qrStream = new MemoryStream();
+                    qrImage.Save(qrStream, System.Drawing.Imaging.ImageFormat.Png);
+                    qrStream.Position = 0;
+
+                    ImagePart imagePart = mainPart.AddImagePart(ImagePartType.Png);
+                    imagePart.FeedData(qrStream);
+
+                    AddImageToBody(mainPart.GetIdOfPart(imagePart), body);
+                }
+
+                // ❗ Quan trọng: Lưu document
+                mainPart.Document.Save();
             }
 
-            ThemDoan("HÓA ĐƠN BÁN HÀNG", true, JustificationValues.Center);
-            ThemDoan($"Mã hóa đơn: {maHoaDon}", true);
-            ThemDoan($"Tên khách hàng: {tenKhachHang}");
-            ThemDoan($"Ngày lập: {ngayLap.ToShortDateString()}");
-            ThemDoan($"Tên nhân viên: {tenNhanVien}");
-            ThemDoan($"Tổng tiền: {tongTien} VND");
-
-            body.AppendChild(new Paragraph(new Run(new Text(""))));
-
-            if (!string.IsNullOrEmpty(urlQr))
-            {
-                await AddImageFromUrlAsync(mainPart, urlQr);
-            }
-
-            mainPart.Document.Save();
+            // ❗ Ghi memory stream ra file
+            await File.WriteAllBytesAsync(filePath, memStream.ToArray());
         }
+
+
+
 
         private async Task AddImageFromUrlAsync(MainDocumentPart mainPart, string imageUrl)
         {
@@ -273,59 +287,58 @@ namespace QuanLyNhaHang
         private void AddImageToBody(string relationshipId, Body body)
         {
             var element =
-                 new Paragraph(
-                     new Run(
-                         new Drawing(
-                             new DocumentFormat.OpenXml.Drawing.Wordprocessing.Inline(
-                                 new DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent() { Cx = 990000L, Cy = 990000L },
-                                 new DocumentFormat.OpenXml.Drawing.Wordprocessing.EffectExtent()
-                                 {
-                                     LeftEdge = 0L,
-                                     TopEdge = 0L,
-                                     RightEdge = 0,
-                                     BottomEdge = 0
-                                 },
-                                 new DocumentFormat.OpenXml.Drawing.Wordprocessing.DocProperties()
-                                 {
-                                     Id = (UInt32Value)1U,
-                                     Name = "QR Code"
-                                 },
-                                 new DocumentFormat.OpenXml.Drawing.Wordprocessing.NonVisualGraphicFrameDrawingProperties(
-                                     new DocumentFormat.OpenXml.Drawing.GraphicFrameLocks() { NoChangeAspect = true }),
-                                 new DocumentFormat.OpenXml.Drawing.Graphic(
-                                     new DocumentFormat.OpenXml.Drawing.GraphicData(
-                                         new DocumentFormat.OpenXml.Drawing.Pictures.Picture(
-                                             new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties(
-                                                 new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties()
-                                                 {
-                                                     Id = (UInt32Value)0U,
-                                                     Name = "QRCode.png"
-                                                 },
-                                                 new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties()),
-                                             new DocumentFormat.OpenXml.Drawing.Pictures.BlipFill(
-                                                 new DocumentFormat.OpenXml.Drawing.Blip()
-                                                 {
-                                                     Embed = relationshipId,
-                                                     CompressionState = DocumentFormat.OpenXml.Drawing.BlipCompressionValues.Print
-                                                 },
-                                                 new DocumentFormat.OpenXml.Drawing.Stretch(
-                                                     new DocumentFormat.OpenXml.Drawing.FillRectangle())),
-                                             new DocumentFormat.OpenXml.Drawing.ShapeProperties(
-                                                 new DocumentFormat.OpenXml.Drawing.Transform2D(
-                                                     new DocumentFormat.OpenXml.Drawing.Offset() { X = 0L, Y = 0L },
-                                                     new DocumentFormat.OpenXml.Drawing.Extents() { Cx = 990000L, Cy = 990000L }),
-                                                 new DocumentFormat.OpenXml.Drawing.PresetGeometry(
-                                                     new DocumentFormat.OpenXml.Drawing.AdjustValueList()
-                                                 )
-                                                 { Preset = DocumentFormat.OpenXml.Drawing.ShapeTypeValues.Rectangle }))
+                new Drawing(
+                    new DocumentFormat.OpenXml.Drawing.Wordprocessing.Inline(
+                        new DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent() { Cx = 3000000L, Cy = 3000000L },
+                        new DocumentFormat.OpenXml.Drawing.Wordprocessing.EffectExtent()
+                        {
+                            LeftEdge = 0L,
+                            TopEdge = 0L,
+                            RightEdge = 0L,
+                            BottomEdge = 0L
+                        },
+                        new DocumentFormat.OpenXml.Drawing.Wordprocessing.DocProperties()
+                        {
+                            Id = (UInt32Value)1U,
+                            Name = "QR Image"
+                        },
+                        new DocumentFormat.OpenXml.Drawing.Wordprocessing.NonVisualGraphicFrameDrawingProperties(
+                            new DocumentFormat.OpenXml.Drawing.GraphicFrameLocks() { NoChangeAspect = true }),
+                        new DocumentFormat.OpenXml.Drawing.Graphic(
+                            new DocumentFormat.OpenXml.Drawing.GraphicData(
+                                new DocumentFormat.OpenXml.Drawing.Pictures.Picture(
+                                    new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties(
+                                        new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties()
+                                        {
+                                            Id = (UInt32Value)0U,
+                                            Name = "Picture.jpg"
+                                        },
+                                        new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties()),
+                                    new DocumentFormat.OpenXml.Drawing.Pictures.BlipFill(
+                                        new DocumentFormat.OpenXml.Drawing.Blip()
+                                        {
+                                            Embed = relationshipId,
+                                            CompressionState = DocumentFormat.OpenXml.Drawing.BlipCompressionValues.Print
+                                        },
+                                        new DocumentFormat.OpenXml.Drawing.Stretch(
+                                            new DocumentFormat.OpenXml.Drawing.FillRectangle())),
+                                    new DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties(
+                                        new DocumentFormat.OpenXml.Drawing.Transform2D(
+                                            new DocumentFormat.OpenXml.Drawing.Offset() { X = 0L, Y = 0L },
+                                            new DocumentFormat.OpenXml.Drawing.Extents() { Cx = 3000000L, Cy = 3000000L }),
+                                        new DocumentFormat.OpenXml.Drawing.PresetGeometry(
+                                            new DocumentFormat.OpenXml.Drawing.AdjustValueList())
+                                        { Preset = DocumentFormat.OpenXml.Drawing.ShapeTypeValues.Rectangle }))
+                            )
+                            { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" })
+                    )
+                    { DistanceFromTop = 0U, DistanceFromBottom = 0U, DistanceFromLeft = 0U, DistanceFromRight = 0U });
 
-                                         )
-                                     { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" })
-                             )
-                             { DistanceFromTop = (UInt32Value)0U, DistanceFromBottom = (UInt32Value)0U, DistanceFromLeft = (UInt32Value)0U, DistanceFromRight = (UInt32Value)0U })));
-
-            body.AppendChild(element);
+            // Thêm vào một đoạn văn
+            Paragraph paragraph = new Paragraph(new Run(element));
+            body.AppendChild(paragraph);
         }
+
 
         // Khi in hóa đơn xong, cập nhật trạng thái hóa đơn và bàn ăn
         private async void btnInHoaDon_Click(object sender, EventArgs e)
@@ -351,29 +364,21 @@ namespace QuanLyNhaHang
                     DateTime ngayLap = dtpNgayLap.Value;
                     string tenNhanVien = cmbNhanVien.Text;
                     decimal tongTien = decimal.Parse(txtTongTien.Text.Replace("VND", "").Trim());
-                    string qrUrl = picQR.ImageLocation;
+                    Image qrImage = picQR.Image;
 
                     try
                     {
-                        await System.Threading.Tasks.Task.Run(() =>
-                            TaoHoaDonWordAsync(filePath, maHoaDon, tenKhachHang,
-                            ngayLap, tenNhanVien,
-                            tongTien, qrUrl)
-                        );
+                        // GỌI AWAIT TRỰC TIẾP, không dùng Task.Run
+                        await TaoHoaDonWordAsync(filePath, maHoaDon, tenKhachHang, ngayLap, tenNhanVien, tongTien, qrImage);
 
-                        // Cập nhật trạng thái hóa đơn
                         CapNhatTrangThaiHoaDon(currentIdHoaDon);
 
-                        // Lấy số bàn từ hóa đơn
                         string soBan = LaySoBanTheoHoaDon(currentIdHoaDon);
                         int idBanAn = LayIDBanAnTheoSoBan(soBan);
 
-                        // Cập nhật trạng thái bàn thành "Trống"
                         if (formQuanLyBan != null && idBanAn > 0)
                         {
                             formQuanLyBan.CapNhatTrangThaiBanTheoIDBanAn(idBanAn, "Trống");
-
-                            // Load lại danh sách bàn trong form bàn ăn để cập nhật UI
                             formQuanLyBan.LoadDanhSachBan();
                         }
 
@@ -504,32 +509,6 @@ namespace QuanLyNhaHang
             LoadDanhSachHoaDon();
         }
 
-        private void CapNhatTrangThaiBanSauThanhToanHoacXoaHoaDon()
-        {
-            using SqlConnection conn = new SqlConnection(connectionString);
-            conn.Open();
-
-            string resetTrangThaiQuery = "UPDATE BanAn SET TrangThai = N'Trống'";
-            SqlCommand resetCmd = new SqlCommand(resetTrangThaiQuery, conn);
-            resetCmd.ExecuteNonQuery();
-
-            string datBanQuery = @"
-                UPDATE BanAn
-                SET TrangThai = N'Đã đặt'
-                WHERE IDBanAn IN (SELECT IDBanAn FROM DatBan)";
-            SqlCommand datBanCmd = new SqlCommand(datBanQuery, conn);
-            datBanCmd.ExecuteNonQuery();
-
-            string chuaThanhToanQuery = @"
-                UPDATE BanAn
-                SET TrangThai = N'Chưa thanh toán'
-                WHERE IDBanAn IN (SELECT SoBan FROM HoaDon WHERE TrangThai = N'Chưa thanh toán')";
-            SqlCommand chuaThanhToanCmd = new SqlCommand(chuaThanhToanQuery, conn);
-            chuaThanhToanCmd.ExecuteNonQuery();
-
-            conn.Close();
-        }
-
         private class HoaDonChiTiet
         {
             public string MaHoaDon { get; set; }
@@ -538,5 +517,23 @@ namespace QuanLyNhaHang
             public string TenKhachHang { get; set; }
             public int IDNhanVien { get; set; }
         }
+        public void LoadChiTietTheoIDHoaDon(int idHoaDon)
+        {
+            foreach (DataGridViewRow row in dtgvDSHoaDon.Rows)
+            {
+                if (row.Cells["IDHoaDon"].Value != null &&
+                    Convert.ToInt32(row.Cells["IDHoaDon"].Value) == idHoaDon)
+                {
+                    dtgvDSHoaDon.ClearSelection();
+                    row.Selected = true;
+                    dtgvDSHoaDon.CurrentCell = row.Cells[0];
+
+                    // Gọi lại xử lý click để load dữ liệu
+                    dtgvDSHoaDon_CellClick(dtgvDSHoaDon, new DataGridViewCellEventArgs(0, row.Index));
+                    break;
+                }
+            }
+        }
+
     }
 }

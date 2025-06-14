@@ -186,9 +186,9 @@
             // 
             // btnXoaNguyenLieu
             // 
-            btnXoaNguyenLieu.Location = new Point(613, 268);
+            btnXoaNguyenLieu.Location = new Point(612, 281);
             btnXoaNguyenLieu.Name = "btnXoaNguyenLieu";
-            btnXoaNguyenLieu.Size = new Size(152, 29);
+            btnXoaNguyenLieu.Size = new Size(151, 31);
             btnXoaNguyenLieu.TabIndex = 26;
             btnXoaNguyenLieu.Text = "Xóa nguyên liệu";
             btnXoaNguyenLieu.UseVisualStyleBackColor = true;
@@ -196,9 +196,9 @@
             // 
             // btnThemNguyenLieu
             // 
-            btnThemNguyenLieu.Location = new Point(613, 236);
+            btnThemNguyenLieu.Location = new Point(613, 243);
             btnThemNguyenLieu.Name = "btnThemNguyenLieu";
-            btnThemNguyenLieu.Size = new Size(152, 29);
+            btnThemNguyenLieu.Size = new Size(150, 32);
             btnThemNguyenLieu.TabIndex = 25;
             btnThemNguyenLieu.Text = "Thêm Nguyên Liệu";
             btnThemNguyenLieu.UseVisualStyleBackColor = true;

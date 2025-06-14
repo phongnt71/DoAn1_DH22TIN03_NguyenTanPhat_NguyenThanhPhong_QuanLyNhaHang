@@ -44,6 +44,16 @@
             btnXoa = new Button();
             btnSua = new Button();
             btnThem = new Button();
+            txtDiaChi = new TextBox();
+            label6 = new Label();
+            txtEmail = new TextBox();
+            label7 = new Label();
+            txtSoDienThoai = new TextBox();
+            label8 = new Label();
+            cmbGioiTinh = new ComboBox();
+            label9 = new Label();
+            dtpNgaySinh = new DateTimePicker();
+            label10 = new Label();
             ((System.ComponentModel.ISupportInitialize)dtgvNhanVien).BeginInit();
             SuspendLayout();
             // 
@@ -117,7 +127,7 @@
             cmbQuyen.FormattingEnabled = true;
             cmbQuyen.Location = new Point(117, 144);
             cmbQuyen.Name = "cmbQuyen";
-            cmbQuyen.Size = new Size(220, 28);
+            cmbQuyen.Size = new Size(139, 28);
             cmbQuyen.TabIndex = 67;
             // 
             // label5
@@ -188,11 +198,102 @@
             btnThem.UseVisualStyleBackColor = true;
             btnThem.Click += btnThem_Click;
             // 
+            // txtDiaChi
+            // 
+            txtDiaChi.Location = new Point(478, 78);
+            txtDiaChi.Name = "txtDiaChi";
+            txtDiaChi.Size = new Size(220, 27);
+            txtDiaChi.TabIndex = 79;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(375, 85);
+            label6.Name = "label6";
+            label6.Size = new Size(55, 20);
+            label6.TabIndex = 78;
+            label6.Text = "Địa chỉ";
+            // 
+            // txtEmail
+            // 
+            txtEmail.Location = new Point(478, 45);
+            txtEmail.Name = "txtEmail";
+            txtEmail.Size = new Size(220, 27);
+            txtEmail.TabIndex = 77;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(375, 52);
+            label7.Name = "label7";
+            label7.Size = new Size(46, 20);
+            label7.TabIndex = 76;
+            label7.Text = "Email";
+            // 
+            // txtSoDienThoai
+            // 
+            txtSoDienThoai.Location = new Point(478, 12);
+            txtSoDienThoai.Name = "txtSoDienThoai";
+            txtSoDienThoai.Size = new Size(220, 27);
+            txtSoDienThoai.TabIndex = 75;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(375, 19);
+            label8.Name = "label8";
+            label8.Size = new Size(97, 20);
+            label8.TabIndex = 74;
+            label8.Text = "Số điện thoại";
+            // 
+            // cmbGioiTinh
+            // 
+            cmbGioiTinh.FormattingEnabled = true;
+            cmbGioiTinh.Location = new Point(478, 111);
+            cmbGioiTinh.Name = "cmbGioiTinh";
+            cmbGioiTinh.Size = new Size(113, 28);
+            cmbGioiTinh.TabIndex = 81;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(375, 119);
+            label9.Name = "label9";
+            label9.Size = new Size(65, 20);
+            label9.TabIndex = 80;
+            label9.Text = "Giới tính";
+            // 
+            // dtpNgaySinh
+            // 
+            dtpNgaySinh.Location = new Point(478, 142);
+            dtpNgaySinh.Name = "dtpNgaySinh";
+            dtpNgaySinh.Size = new Size(220, 27);
+            dtpNgaySinh.TabIndex = 83;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(378, 149);
+            label10.Name = "label10";
+            label10.Size = new Size(74, 20);
+            label10.TabIndex = 82;
+            label10.Text = "Ngày sinh";
+            // 
             // FormNhanVien
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(dtpNgaySinh);
+            Controls.Add(label10);
+            Controls.Add(cmbGioiTinh);
+            Controls.Add(label9);
+            Controls.Add(txtDiaChi);
+            Controls.Add(label6);
+            Controls.Add(txtEmail);
+            Controls.Add(label7);
+            Controls.Add(txtSoDienThoai);
+            Controls.Add(label8);
             Controls.Add(btnHuy);
             Controls.Add(btnLuu);
             Controls.Add(btnXoa);
@@ -236,5 +337,15 @@
         private Button btnXoa;
         private Button btnSua;
         private Button btnThem;
+        private TextBox txtDiaChi;
+        private Label label6;
+        private TextBox txtEmail;
+        private Label label7;
+        private TextBox txtSoDienThoai;
+        private Label label8;
+        private ComboBox cmbGioiTinh;
+        private Label label9;
+        private DateTimePicker dtpNgaySinh;
+        private Label label10;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using System.IO;
 
 namespace QuanLyNhaHang
 {
@@ -14,12 +15,26 @@ namespace QuanLyNhaHang
         {
             InitializeComponent();
             this.IsMdiContainer = true;
+            this.WindowState = FormWindowState.Maximized;
         }
 
         private void FormMain_Load(object sender, EventArgs e)
         {
+            string imagePath = Path.Combine(Application.StartupPath, "Images", "delicious-food-buffet-bottom-focus.jpg");
 
+            foreach (Control ctl in this.Controls)
+            {
+                if (ctl is MdiClient client)
+                {
+                    client.BackgroundImage = Image.FromFile(imagePath);
+                    client.BackgroundImageLayout = ImageLayout.Stretch; // 👈 giữ bố cục ban đầu
+                    client.BackColor = Color.Black; // tránh nền trắng
+                    break;
+                }
+            }
         }
+
+
 
         private void menuQuanLyBan_Click(object sender, EventArgs e)
         {
@@ -152,9 +167,26 @@ namespace QuanLyNhaHang
             formDSHoaDon.Show();
         }
 
+        private void báoCáoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormBaoCao)
+                {
+                    frm.Activate(); // Kích hoạt form đã mở
+                    return;         // Thoát không tạo form mới
+                }
+            }
+            // Nếu chưa có form thì tạo mới
+            FormBaoCao formBaoCao = new FormBaoCao();
+            formBaoCao.MdiParent = this; // Gán form cha
+            formBaoCao.Show();           // Hiển thị form
+        }
+
+
         private void nhânViênToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (QuyenHienTai == "Admin")
+            if (QuyenHienTai == "Admin" || QuyenHienTai == "QuanLy")
             {
                 foreach (Form frm in this.MdiChildren)
                 {
@@ -174,20 +206,49 @@ namespace QuanLyNhaHang
             }
         }
 
-        private void báoCáoToolStripMenuItem_Click(object sender, EventArgs e)
+        private void đăngXuấtToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show(
+                "Bạn có chắc chắn muốn đăng xuất?",
+                "Xác nhận",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                // 1. Ẩn FormMain
+                this.Hide();
+
+                // 2. Gọi lại form đăng nhập
+                FormLogin loginForm = new FormLogin();
+                if (loginForm.ShowDialog() == DialogResult.OK)
+                {
+                    // Nếu đăng nhập lại thành công → hiện lại FormMain
+                    this.Show();
+                }
+                else
+                {
+                    // Nếu không → thoát hẳn ứng dụng
+                    Application.Exit();
+                }
+            }
+        }
+
+        private void tàiKhoảnToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (Form frm in this.MdiChildren)
             {
-                if (frm is FormBaoCao)
+                if (frm is FormTaiKhoan)
                 {
-                    frm.Activate(); // Kích hoạt form đã mở
-                    return;         // Thoát không tạo form mới
+                    frm.Activate(); // Nếu đã mở rồi thì focus lại
+                    return;
                 }
             }
-            // Nếu chưa có form thì tạo mới
-            FormBaoCao formBaoCao = new FormBaoCao();
-            formBaoCao.MdiParent = this; // Gán form cha
-            formBaoCao.Show();           // Hiển thị form
+
+            FormTaiKhoan formTaiKhoan = new FormTaiKhoan();
+            formTaiKhoan.MdiParent = this; // Gán MDI cha là FormMain
+            formTaiKhoan.Show(); // Mở form như MDI child
         }
 
     }

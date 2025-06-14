@@ -135,7 +135,6 @@
             Name = "FormQuanLyBan";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "FormQuanLyBan";
-            Load += FormQuanLyBan_Load;
             ResumeLayout(false);
             PerformLayout();
         }
