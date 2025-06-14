@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace QuanLyNhaHang
@@ -27,9 +27,10 @@ namespace QuanLyNhaHang
             {
                 conn.Open();
 
+                // Tính tổng tiền nhập từ bảng PhieuNhapNguyenLieu theo từng lần nhập
                 string query = @"
-                    SELECT SUM(GiaNhap * SoLuongTon) 
-                    FROM NguyenLieu
+                    SELECT SUM(GiaNhap * SoLuong)
+                    FROM PhieuNhapNguyenLieu
                     WHERE NgayNhap BETWEEN @FromDate AND @ToDate";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
@@ -98,6 +99,11 @@ namespace QuanLyNhaHang
                 dtgvTongThuTheoNgay.Columns["TongTienThu"].DefaultCellStyle.Format = "N0";
                 dtgvTongThuTheoNgay.Columns["Ngay"].DefaultCellStyle.Format = "dd/MM/yyyy";
             }
+        }
+
+        private void FormBaoCao_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

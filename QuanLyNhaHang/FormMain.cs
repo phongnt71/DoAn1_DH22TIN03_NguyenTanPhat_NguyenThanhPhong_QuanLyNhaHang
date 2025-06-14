@@ -90,21 +90,6 @@ namespace QuanLyNhaHang
             formMonAn.Show();
         }
 
-        private void nguyenLieuToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            foreach (Form frm in this.MdiChildren)
-            {
-                if (frm is FormNguyenLieu)
-                {
-                    frm.Activate();
-                    return;
-                }
-            }
-            FormNguyenLieu formNguyenLieu = new FormNguyenLieu();
-            formNguyenLieu.MdiParent = this;
-            formNguyenLieu.Show();
-        }
-
         private void tạoMớiHóaĐơnToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (Form frm in this.MdiChildren)
@@ -249,6 +234,36 @@ namespace QuanLyNhaHang
             FormTaiKhoan formTaiKhoan = new FormTaiKhoan();
             formTaiKhoan.MdiParent = this; // Gán MDI cha là FormMain
             formTaiKhoan.Show(); // Mở form như MDI child
+        }
+
+        private void danhSáchNguyênLiệuToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormNguyenLieu)
+                {
+                    frm.Activate();
+                    return;
+                }
+            }
+            FormNguyenLieu formNguyenLieu = new FormNguyenLieu();
+            formNguyenLieu.MdiParent = this;
+            formNguyenLieu.Show();
+        }
+
+        private void nhậpNguyênLiệuToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormNhapNguyenLieu)
+                {
+                    frm.Activate();
+                    return;
+                }
+            }
+            FormNhapNguyenLieu formNhap = new FormNhapNguyenLieu();
+            formNhap.MdiParent = this;
+            formNhap.Show();
         }
 
     }

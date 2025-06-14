@@ -34,6 +34,8 @@
             đặtBànToolStripMenuItem = new ToolStripMenuItem();
             mónĂnToolStripMenuItem = new ToolStripMenuItem();
             nguyênLiệuToolStripMenuItem = new ToolStripMenuItem();
+            danhSáchNguyênLiệuToolStripMenuItem = new ToolStripMenuItem();
+            nhậpNguyênLiệuToolStripMenuItem = new ToolStripMenuItem();
             hóaĐơnToolStripMenuItem = new ToolStripMenuItem();
             tạoMớiHóaĐơnToolStripMenuItem = new ToolStripMenuItem();
             danhSáchHóaĐơnToolStripMenuItem = new ToolStripMenuItem();
@@ -86,10 +88,24 @@
             // 
             // nguyênLiệuToolStripMenuItem
             // 
+            nguyênLiệuToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { danhSáchNguyênLiệuToolStripMenuItem, nhậpNguyênLiệuToolStripMenuItem });
             nguyênLiệuToolStripMenuItem.Name = "nguyênLiệuToolStripMenuItem";
             nguyênLiệuToolStripMenuItem.Size = new Size(105, 24);
             nguyênLiệuToolStripMenuItem.Text = "Nguyên Liệu";
-            nguyênLiệuToolStripMenuItem.Click += nguyenLieuToolStripMenuItem_Click;
+            // 
+            // danhSáchNguyênLiệuToolStripMenuItem
+            // 
+            danhSáchNguyênLiệuToolStripMenuItem.Name = "danhSáchNguyênLiệuToolStripMenuItem";
+            danhSáchNguyênLiệuToolStripMenuItem.Size = new Size(240, 26);
+            danhSáchNguyênLiệuToolStripMenuItem.Text = "Danh sách nguyên liệu";
+            danhSáchNguyênLiệuToolStripMenuItem.Click += danhSáchNguyênLiệuToolStripMenuItem_Click;
+            // 
+            // nhậpNguyênLiệuToolStripMenuItem
+            // 
+            nhậpNguyênLiệuToolStripMenuItem.Name = "nhậpNguyênLiệuToolStripMenuItem";
+            nhậpNguyênLiệuToolStripMenuItem.Size = new Size(240, 26);
+            nhậpNguyênLiệuToolStripMenuItem.Text = "Nhập nguyên liệu";
+            nhậpNguyênLiệuToolStripMenuItem.Click += nhậpNguyênLiệuToolStripMenuItem_Click;
             // 
             // hóaĐơnToolStripMenuItem
             // 
@@ -188,5 +204,7 @@
         private ToolStripMenuItem danhSáchHóaĐơnToolStripMenuItem;
         private ToolStripMenuItem tàiKhoảnToolStripMenuItem;
         private ToolStripMenuItem đăngXuấtToolStripMenuItem;
+        private ToolStripMenuItem danhSáchNguyênLiệuToolStripMenuItem;
+        private ToolStripMenuItem nhậpNguyênLiệuToolStripMenuItem;
     }
 }

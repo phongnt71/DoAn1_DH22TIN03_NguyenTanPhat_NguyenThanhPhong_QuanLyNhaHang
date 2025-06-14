@@ -252,6 +252,7 @@
             Name = "FormBaoCao";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "FormBaoCao";
+            Load += FormBaoCao_Load;
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             groupBox2.ResumeLayout(false);
