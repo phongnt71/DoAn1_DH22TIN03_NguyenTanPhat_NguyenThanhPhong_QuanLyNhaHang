@@ -14,7 +14,6 @@ namespace QuanLyNhaHang
         {
             InitializeComponent();
 
-            // Chỉ thêm 3 trạng thái mong muốn cho combobox
             cmbTrangThai.Items.AddRange(new string[] { "Trống", "Có người", "Đã đặt" });
 
             LoadDanhSachBan();
@@ -22,7 +21,7 @@ namespace QuanLyNhaHang
             btnThemBan.Click += BtnThemBan_Click;
             btnSuaBan.Click += BtnSuaBan_Click;
             btnXoaBan.Click += BtnXoaBan_Click;
-            btnLamMoi.Click += btnLamMoi_Click; // Thêm sự kiện cho nút làm mới
+            btnLamMoi.Click += btnLamMoi_Click;
         }
 
         public void LoadDanhSachBan()
@@ -87,29 +86,82 @@ namespace QuanLyNhaHang
                     {
                         MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        // Cập nhật CSDL
                         CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
-
-                        // ➕ Cập nhật lại chính nút đã click thay vì load toàn bộ lại
                         clickedButton.Text = $"Bàn {soBan}\nTrống";
                         clickedButton.BackColor = Color.Aqua;
-
-                        // Sửa lại Tag để cập nhật trạng thái mới cho lần click tiếp theo
                         row["TrangThai"] = "Trống";
                         clickedButton.Tag = row;
-
                         return;
                     }
 
-                    // Mở form và load chi tiết hóa đơn
                     FormDSHoaDon frm = new FormDSHoaDon(this);
                     frm.MdiParent = this.MdiParent;
                     frm.Show();
                     frm.BringToFront();
                     frm.LoadChiTietTheoIDHoaDon(idHoaDon);
                 }
+                else if (trangThai == "Đã đặt")
+                {
+                    var thongTin = LayThongTinDatBan(soBan);
+                    if (thongTin != null)
+                    {
+                        MessageBox.Show(
+                            $"Tên khách: {thongTin.TenKhach}\n" +
+                            $"SĐT: {thongTin.SoDienThoai}\n" +
+                            $"Thời gian đặt: {thongTin.ThoiGianDat:HH:mm dd/MM/yyyy}",
+                            $"Thông tin đặt bàn {soBan}",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không tìm thấy thông tin đặt bàn.", "Thông báo");
+
+                        CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
+                        clickedButton.Text = $"Bàn {soBan}\nTrống";
+                        clickedButton.BackColor = Color.Aqua;
+                        row["TrangThai"] = "Trống";
+                        clickedButton.Tag = row;
+                    }
+                }
             }
         }
+
+
+        private ThongTinDatBan? LayThongTinDatBan(string soBan)
+        {
+            string query = @"
+        SELECT TOP 1 
+            k.TenKH AS TenKhach, 
+            k.SDT AS SoDienThoai,
+            DATEADD(SECOND, DATEPART(SECOND, d.GioDat),
+                DATEADD(MINUTE, DATEPART(MINUTE, d.GioDat),
+                    DATEADD(HOUR, DATEPART(HOUR, d.GioDat), CAST(d.NgayDat AS DATETIME)))) AS ThoiGianDat
+        FROM DatBan d
+        JOIN BanAn b ON d.IDBanAn = b.IDBanAn
+        JOIN KhachHang k ON d.IDKhachHang = k.IDKhachHang
+        WHERE b.SoBan = @SoBan AND d.TrangThai = N'Đã đặt'
+        ORDER BY d.NgayDat DESC, d.GioDat DESC";
+
+            using SqlConnection conn = new SqlConnection(connectionString);
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@SoBan", soBan);
+
+            conn.Open();
+            using SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return new ThongTinDatBan
+                {
+                    TenKhach = reader["TenKhach"].ToString() ?? "",
+                    SoDienThoai = reader["SoDienThoai"].ToString() ?? "",
+                    ThoiGianDat = Convert.ToDateTime(reader["ThoiGianDat"])
+                };
+            }
+
+            return null;
+        }
+
 
         private int LayHoaDonChuaThanhToanTheoSoBan(string soBan)
         {
@@ -129,7 +181,6 @@ namespace QuanLyNhaHang
             return -1;
         }
 
-
         private void BtnThemBan_Click(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtMaSoBan.Text) || cmbTrangThai.SelectedItem is not string trangThai)
@@ -143,7 +194,6 @@ namespace QuanLyNhaHang
                 using SqlConnection conn = new SqlConnection(connectionString);
                 conn.Open();
 
-                // Kiểm tra bàn đã tồn tại chưa
                 string checkQuery = "SELECT COUNT(*) FROM BanAn WHERE SoBan = @SoBan";
                 using SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@SoBan", txtMaSoBan.Text.Trim());
@@ -155,7 +205,6 @@ namespace QuanLyNhaHang
                     return;
                 }
 
-                // Thêm bàn mới
                 string insertQuery = "INSERT INTO BanAn (SoBan, TrangThai) VALUES (@SoBan, @TrangThai)";
                 using SqlCommand insertCmd = new SqlCommand(insertQuery, conn);
                 insertCmd.Parameters.AddWithValue("@SoBan", txtMaSoBan.Text.Trim());
@@ -262,7 +311,6 @@ namespace QuanLyNhaHang
             }
         }
 
-        // Hàm cập nhật trạng thái bàn theo số bàn và trạng thái mới
         public void CapNhatTrangThaiBanTheoSoBan(string soBan, string trangThaiMoi)
         {
             try
@@ -285,35 +333,32 @@ namespace QuanLyNhaHang
             }
         }
 
-        // Hàm cập nhật trạng thái bàn theo IDBanAn (thêm mới)
         public void CapNhatTrangThaiBanTheoIDBanAn(int idBanAn, string trangThai)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "UPDATE BanAn SET TrangThai = @TrangThai WHERE IDBanAn = @IDBanAn";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@TrangThai", trangThai);
-                cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-            }
+            using SqlConnection conn = new SqlConnection(connectionString);
+            string query = "UPDATE BanAn SET TrangThai = @TrangThai WHERE IDBanAn = @IDBanAn";
+            SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@TrangThai", trangThai);
+            cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            conn.Close();
 
-            // Load lại danh sách bàn để cập nhật UI
             LoadDanhSachBan();
         }
 
         private void btnLamMoi_Click(object sender, EventArgs e)
         {
-            // Xóa text ở textbox Mã số bàn
             txtMaSoBan.Clear();
-
-            // Reset trạng thái combobox về chưa chọn
             cmbTrangThai.SelectedIndex = -1;
-
-            // Tải lại danh sách bàn, để refresh hiển thị mới nhất
             LoadDanhSachBan();
         }
+    }
 
+    public class ThongTinDatBan
+    {
+        public string TenKhach { get; set; }
+        public string SoDienThoai { get; set; }
+        public DateTime ThoiGianDat { get; set; }
     }
 }

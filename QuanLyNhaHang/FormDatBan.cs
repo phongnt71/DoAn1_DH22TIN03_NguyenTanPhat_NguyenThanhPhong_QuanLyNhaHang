@@ -14,7 +14,12 @@ namespace QuanLyNhaHang
             InitializeComponent();
             this.Load += FormDatBan_Load;
             dtgvDatBan.CellClick += DtgvDatBan_CellClick;
+
+            // Hiển thị giờ 24h
+            dtpGioDat.Format = DateTimePickerFormat.Custom;
+            dtpGioDat.CustomFormat = "HH:mm";
         }
+
 
         private void FormDatBan_Load(object sender, EventArgs e)
         {
@@ -62,6 +67,26 @@ namespace QuanLyNhaHang
                 dtgvDatBan.Columns["GioDat"].HeaderText = "Giờ đặt";
             }
         }
+        private void LoadBanTrong()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT IDBanAn, SoBan FROM BanAn WHERE TrangThai = N'Trống' ORDER BY SoBan";
+                SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                cmbBanAn.DataSource = null; // ✅ reset lại để tránh lỗi
+                cmbBanAn.DisplayMember = "SoBan";
+                cmbBanAn.ValueMember = "IDBanAn";
+                cmbBanAn.DataSource = dt;
+
+                cmbBanAn.SelectedIndex = dt.Rows.Count > 0 ? 0 : -1;
+            }
+        }
+
+
 
         private void btnThem_Click(object sender, EventArgs e)
         {
@@ -284,6 +309,12 @@ namespace QuanLyNhaHang
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : (int?)null;
             }
+        }
+        private void btnLamMoi_Click(object sender, EventArgs e)
+        {
+            LoadBanTrong();      // cập nhật lại danh sách bàn trống
+            LoadDatBan();        // reload danh sách đặt bàn
+            ClearForm();         // reset form
         }
 
         private void ClearForm()

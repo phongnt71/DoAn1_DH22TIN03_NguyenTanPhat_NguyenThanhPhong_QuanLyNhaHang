@@ -40,6 +40,7 @@
             btnSua = new Button();
             btnThem = new Button();
             dtgvDatBan = new DataGridView();
+            btnLamMoi = new Button();
             ((System.ComponentModel.ISupportInitialize)dtgvDatBan).BeginInit();
             SuspendLayout();
             // 
@@ -149,11 +150,22 @@
             dtgvDatBan.Size = new Size(778, 258);
             dtgvDatBan.TabIndex = 36;
             // 
+            // btnLamMoi
+            // 
+            btnLamMoi.Location = new Point(310, 145);
+            btnLamMoi.Name = "btnLamMoi";
+            btnLamMoi.Size = new Size(94, 29);
+            btnLamMoi.TabIndex = 52;
+            btnLamMoi.Text = "Làm mới";
+            btnLamMoi.UseVisualStyleBackColor = true;
+            btnLamMoi.Click += btnLamMoi_Click;
+            // 
             // FormDatBan
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnLamMoi);
             Controls.Add(dtgvDatBan);
             Controls.Add(btnXoa);
             Controls.Add(btnSua);
@@ -189,5 +201,6 @@
         private Button btnSua;
         private Button btnThem;
         private DataGridView dtgvDatBan;
+        private Button btnLamMoi;
     }
 }

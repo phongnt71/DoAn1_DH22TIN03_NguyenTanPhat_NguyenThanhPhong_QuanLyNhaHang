@@ -184,6 +184,7 @@
             btnXoa.TabIndex = 66;
             btnXoa.Text = "Xóa";
             btnXoa.UseVisualStyleBackColor = true;
+            btnXoa.Click += btnXoa_Click;
             // 
             // FormDSHoaDon
             // 

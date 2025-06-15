@@ -215,14 +215,30 @@ namespace QuanLyNhaHang
                 return;
             }
 
+            var selectedRow = dtgvMonAn.SelectedRows[0];
+
+            // Sửa lỗi CS1503 tại đây
+            if (!dtgvMonAn.Columns.Contains("IDMonAn") || selectedRow.Cells["IDMonAn"].Value == null)
+            {
+                MessageBox.Show("Không thể xác định mã món ăn để xóa. Vui lòng thử lại.");
+                return;
+            }
+
+            string idMonAn = selectedRow.Cells["IDMonAn"].Value.ToString();
+            if (string.IsNullOrWhiteSpace(idMonAn))
+            {
+                MessageBox.Show("Mã món ăn không hợp lệ.");
+                return;
+            }
+
             DialogResult dr = MessageBox.Show("Bạn có chắc muốn xóa món ăn này?", "Xác nhận", MessageBoxButtons.YesNo);
             if (dr == DialogResult.Yes)
             {
-                string idMonAn = dtgvMonAn.SelectedRows[0].Cells["IDMonAn"].Value.ToString();
                 DeleteMonAn(idMonAn);
                 LoadData();
             }
         }
+
 
         private void BtnLuu_Click(object sender, EventArgs e)
         {
@@ -372,7 +388,14 @@ namespace QuanLyNhaHang
             }
 
             int idMonAn = Convert.ToInt32(dtgvMonAn.SelectedRows[0].Cells["IDMonAn"].Value);
-            int idNguyenLieu = int.Parse(cmbNguyenLieu.SelectedValue.ToString());
+            if (cmbNguyenLieu.SelectedValue == null)
+            {
+                MessageBox.Show("Vui lòng chọn nguyên liệu trước.");
+                return;
+            }
+
+            int idNguyenLieu = Convert.ToInt32(cmbNguyenLieu.SelectedValue);
+
             decimal soLuongTon = nudSoLuongTon.Value;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -438,15 +461,5 @@ namespace QuanLyNhaHang
         {
             LoadData();
         }
-
-        private void cmbLoaiMon_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-        private void txtGiaTien_TextChanged(object sender, EventArgs e)
-        {
-            
-        }
-
     }
 }

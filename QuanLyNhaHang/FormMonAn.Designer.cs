@@ -123,7 +123,6 @@
             cmbLoaiMon.Name = "cmbLoaiMon";
             cmbLoaiMon.Size = new Size(151, 28);
             cmbLoaiMon.TabIndex = 18;
-            cmbLoaiMon.SelectedIndexChanged += cmbLoaiMon_SelectedIndexChanged;
             // 
             // txtMoTa
             // 
@@ -164,7 +163,6 @@
             txtGiaTien.Name = "txtGiaTien";
             txtGiaTien.Size = new Size(151, 27);
             txtGiaTien.TabIndex = 23;
-            txtGiaTien.TextChanged += txtGiaTien_TextChanged;
             // 
             // label2
             // 
