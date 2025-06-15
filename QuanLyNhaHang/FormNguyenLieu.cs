@@ -19,6 +19,12 @@ namespace QuanLyNhaHang
             InitializeComponent();
             InitControls();
             LoadData();
+
+            // Giá trị mặc định và khóa chỉnh sửa
+            txtSoLuongTon.Text = "0";
+            txtGiaNhap.Text = "0";
+            txtSoLuongTon.ReadOnly = true;
+            txtGiaNhap.ReadOnly = true;
         }
 
         private void InitControls()
@@ -41,7 +47,18 @@ namespace QuanLyNhaHang
                 try
                 {
                     conn.Open();
-                    string query = "SELECT * FROM NguyenLieu";
+                    string query = @"
+                        SELECT nl.IDNguyenLieu, nl.TenNguyenLieu, nl.SoLuongTon, nl.DonViTinh, nl.GhiChu,
+                               ISNULL(pn.GiaNhap, 0) AS GiaNhap,
+                               pn.NgayNhap
+                        FROM NguyenLieu nl
+                        OUTER APPLY (
+                            SELECT TOP 1 GiaNhap, NgayNhap
+                            FROM PhieuNhapNguyenLieu
+                            WHERE MaNguyenLieu = nl.IDNguyenLieu
+                            ORDER BY NgayNhap DESC
+                        ) pn";
+
                     SqlDataAdapter da = new SqlDataAdapter(query, conn);
                     dtNguyenLieu = new DataTable();
                     da.Fill(dtNguyenLieu);
@@ -51,10 +68,11 @@ namespace QuanLyNhaHang
                     dgvNguyenLieu.Columns["TenNguyenLieu"].HeaderText = "Tên nguyên liệu";
                     dgvNguyenLieu.Columns["SoLuongTon"].HeaderText = "Số lượng";
                     dgvNguyenLieu.Columns["DonViTinh"].HeaderText = "Đơn vị tính";
-                    dgvNguyenLieu.Columns["GiaNhap"].HeaderText = "Giá nhập";
+                    dgvNguyenLieu.Columns["GiaNhap"].HeaderText = "Giá nhập gần nhất";
                     dgvNguyenLieu.Columns["GhiChu"].HeaderText = "Ghi chú";
-                    dgvNguyenLieu.Columns["NgayNhap"].HeaderText = "Ngày nhập";
+                    dgvNguyenLieu.Columns["NgayNhap"].HeaderText = "Ngày nhập gần nhất";
                     dgvNguyenLieu.Columns["NgayNhap"].DefaultCellStyle.Format = "dd/MM/yyyy";
+
                     dgvNguyenLieu.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                 }
                 catch (Exception ex)
@@ -72,6 +90,7 @@ namespace QuanLyNhaHang
                 txtTenNguyenLieu.Text = row.Cells["TenNguyenLieu"].Value?.ToString();
                 txtSoLuongTon.Text = row.Cells["SoLuongTon"].Value?.ToString();
                 txtDonViTinh.Text = row.Cells["DonViTinh"].Value?.ToString();
+
                 if (decimal.TryParse(row.Cells["GiaNhap"].Value?.ToString(), out decimal giaNhap))
                 {
                     txtGiaNhap.Text = giaNhap.ToString("N0", new CultureInfo("vi-VN"));
@@ -80,6 +99,7 @@ namespace QuanLyNhaHang
                 {
                     txtGiaNhap.Text = "0";
                 }
+
                 txtGhiChu.Text = row.Cells["GhiChu"].Value?.ToString();
 
                 if (row.Cells["NgayNhap"].Value != DBNull.Value)
@@ -90,6 +110,7 @@ namespace QuanLyNhaHang
                 {
                     dtpNgayNhap.Value = DateTime.Now;
                 }
+
                 isEditing = true;
             }
         }
@@ -126,7 +147,6 @@ namespace QuanLyNhaHang
                 try
                 {
                     conn.Open();
-
                     string query = "DELETE FROM NguyenLieu WHERE IDNguyenLieu = @id";
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@id", id);
@@ -160,13 +180,13 @@ namespace QuanLyNhaHang
 
                 if (isAdding)
                 {
-                    string query = "INSERT INTO NguyenLieu (TenNguyenLieu, SoLuongTon, DonViTinh, GiaNhap, GhiChu, NgayNhap) VALUES (@Ten, @SoLuong, @DonVi, @GiaNhap, @GhiChu, @NgayNhap)";
+                    string query = "INSERT INTO NguyenLieu (TenNguyenLieu, SoLuongTon, DonViTinh, GhiChu) VALUES (@Ten, @SoLuong, @DonVi, @GhiChu)";
                     cmd = new SqlCommand(query, conn);
                 }
                 else
                 {
                     string id = dgvNguyenLieu.CurrentRow.Cells["IDNguyenLieu"].Value.ToString();
-                    string query = "UPDATE NguyenLieu SET TenNguyenLieu=@Ten, SoLuongTon=@SoLuong, DonViTinh=@DonVi, GiaNhap=@GiaNhap, GhiChu=@GhiChu, NgayNhap=@NgayNhap WHERE IDNguyenLieu=@id";
+                    string query = "UPDATE NguyenLieu SET TenNguyenLieu=@Ten, SoLuongTon=@SoLuong, DonViTinh=@DonVi, GhiChu=@GhiChu WHERE IDNguyenLieu=@id";
                     cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@id", id);
                 }
@@ -174,9 +194,7 @@ namespace QuanLyNhaHang
                 cmd.Parameters.AddWithValue("@Ten", txtTenNguyenLieu.Text);
                 cmd.Parameters.AddWithValue("@SoLuong", int.Parse(txtSoLuongTon.Text));
                 cmd.Parameters.AddWithValue("@DonVi", txtDonViTinh.Text);
-                cmd.Parameters.AddWithValue("@GiaNhap", decimal.Parse(txtGiaNhap.Text));
                 cmd.Parameters.AddWithValue("@GhiChu", txtGhiChu.Text);
-                cmd.Parameters.AddWithValue("@NgayNhap", dtpNgayNhap.Value.Date);
 
                 cmd.ExecuteNonQuery();
             }
@@ -194,9 +212,9 @@ namespace QuanLyNhaHang
         private void ClearInput()
         {
             txtTenNguyenLieu.Text = "";
-            txtSoLuongTon.Text = "";
+            txtSoLuongTon.Text = "0";
             txtDonViTinh.Text = "";
-            txtGiaNhap.Text = "";
+            txtGiaNhap.Text = "0";
             txtGhiChu.Text = "";
             dtpNgayNhap.Value = DateTime.Now;
         }
@@ -205,7 +223,6 @@ namespace QuanLyNhaHang
         {
             btnLuu.Enabled = true;
             btnHuy.Enabled = true;
-
             btnThem.Enabled = false;
             btnSua.Enabled = false;
             btnXoa.Enabled = false;
@@ -229,16 +246,13 @@ namespace QuanLyNhaHang
                 MessageBox.Show("Vui lòng nhập tên nguyên liệu.");
                 return false;
             }
+
             if (!int.TryParse(txtSoLuongTon.Text, out _))
             {
                 MessageBox.Show("Số lượng tồn phải là số nguyên.");
                 return false;
             }
-            if (!decimal.TryParse(txtGiaNhap.Text, out _))
-            {
-                MessageBox.Show("Giá nhập phải là số hợp lệ.");
-                return false;
-            }
+
             return true;
         }
 

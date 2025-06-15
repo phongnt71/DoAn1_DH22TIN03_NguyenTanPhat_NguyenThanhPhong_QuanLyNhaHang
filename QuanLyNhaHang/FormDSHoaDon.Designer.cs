@@ -209,7 +209,7 @@
             Controls.Add(dtgvDSHoaDon);
             Name = "FormDSHoaDon";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "p";
+            Text = "FormDSHoaDon";
             Load += FormDSHoaDon_Load;
             ((System.ComponentModel.ISupportInitialize)picQR).EndInit();
             ((System.ComponentModel.ISupportInitialize)dtgvDSHoaDon).EndInit();
