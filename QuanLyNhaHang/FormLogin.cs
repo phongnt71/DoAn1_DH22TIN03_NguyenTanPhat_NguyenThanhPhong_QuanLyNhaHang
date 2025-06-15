@@ -40,6 +40,11 @@ namespace QuanLyNhaHang
             txtUsername.Clear();
             txtPassword.Clear();
             txtUsername.Focus();
+            string logoPath = Path.Combine(Application.StartupPath, "Images", "LogoLogin.png");
+            if (File.Exists(logoPath))
+            {
+                pictureBoxLogo.Image = Image.FromFile(logoPath);
+            }
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)

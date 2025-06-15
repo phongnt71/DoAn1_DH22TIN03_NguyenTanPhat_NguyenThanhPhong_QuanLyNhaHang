@@ -15,103 +15,126 @@
 
         private void InitializeComponent()
         {
-            this.pictureBoxLogo = new PictureBox();
-            this.labelTitle = new Label();
-            this.labelUsername = new Label();
-            this.labelPassword = new Label();
-            this.txtUsername = new TextBox();
-            this.txtPassword = new TextBox();
-            this.btnLogin = new Button();
-            this.btnExit = new Button();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
-            this.SuspendLayout();
-
+            pictureBoxLogo = new PictureBox();
+            labelTitle = new Label();
+            labelUsername = new Label();
+            labelPassword = new Label();
+            txtUsername = new TextBox();
+            txtPassword = new TextBox();
+            btnLogin = new Button();
+            btnExit = new Button();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxLogo).BeginInit();
+            SuspendLayout();
+            // 
             // pictureBoxLogo
-            string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images\\LogoLogin.png");
-            if (File.Exists(logoPath))
-                this.pictureBoxLogo.Image = Image.FromFile(logoPath);
-            this.pictureBoxLogo.SizeMode = PictureBoxSizeMode.Zoom;
-            this.pictureBoxLogo.Location = new Point(320, 20);
-            this.pictureBoxLogo.Size = new Size(150, 150);
-            this.pictureBoxLogo.TabStop = false;
-
+            // 
+            pictureBoxLogo.Location = new Point(320, 20);
+            pictureBoxLogo.Name = "pictureBoxLogo";
+            pictureBoxLogo.Size = new Size(150, 150);
+            pictureBoxLogo.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBoxLogo.TabIndex = 0;
+            pictureBoxLogo.TabStop = false;
+            // 
             // labelTitle
-            this.labelTitle.Text = "ĐĂNG NHẬP";
-            this.labelTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
-            this.labelTitle.ForeColor = Color.FromArgb(34, 112, 52); // Màu xanh lá từ logo
-            this.labelTitle.TextAlign = ContentAlignment.MiddleCenter;
-            this.labelTitle.Location = new Point(0, 180);
-            this.labelTitle.Size = new Size(800, 40);
-
+            // 
+            labelTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            labelTitle.ForeColor = Color.FromArgb(34, 112, 52);
+            labelTitle.Location = new Point(0, 180);
+            labelTitle.Name = "labelTitle";
+            labelTitle.Size = new Size(800, 40);
+            labelTitle.TabIndex = 1;
+            labelTitle.Text = "ĐĂNG NHẬP";
+            labelTitle.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // labelUsername
-            this.labelUsername.Text = "Tên đăng nhập:";
-            this.labelUsername.Font = new Font("Segoe UI", 10F);
-            this.labelUsername.Location = new Point(250, 240);
-            this.labelUsername.Size = new Size(120, 25);
-
-            // txtUsername
-            this.txtUsername.Location = new Point(380, 238);
-            this.txtUsername.Size = new Size(170, 27);
-            this.txtUsername.KeyDown += new KeyEventHandler(this.TxtUsername_KeyDown);
-
+            // 
+            labelUsername.Font = new Font("Segoe UI", 10F);
+            labelUsername.Location = new Point(226, 240);
+            labelUsername.Name = "labelUsername";
+            labelUsername.Size = new Size(131, 25);
+            labelUsername.TabIndex = 2;
+            labelUsername.Text = "Tên đăng nhập:";
+            // 
             // labelPassword
-            this.labelPassword.Text = "Mật khẩu:";
-            this.labelPassword.Font = new Font("Segoe UI", 10F);
-            this.labelPassword.Location = new Point(250, 280);
-            this.labelPassword.Size = new Size(120, 25);
-
+            // 
+            labelPassword.Font = new Font("Segoe UI", 10F);
+            labelPassword.Location = new Point(226, 280);
+            labelPassword.Name = "labelPassword";
+            labelPassword.Size = new Size(131, 25);
+            labelPassword.TabIndex = 3;
+            labelPassword.Text = "Mật khẩu:";
+            // 
+            // txtUsername
+            // 
+            txtUsername.Location = new Point(367, 238);
+            txtUsername.Name = "txtUsername";
+            txtUsername.Size = new Size(197, 27);
+            txtUsername.TabIndex = 0;
+            // 
             // txtPassword
-            this.txtPassword.Location = new Point(380, 278);
-            this.txtPassword.Size = new Size(170, 27);
-            this.txtPassword.UseSystemPasswordChar = true;
-            this.txtPassword.KeyDown += new KeyEventHandler(this.TxtPassword_KeyDown);
-
+            // 
+            txtPassword.Location = new Point(367, 278);
+            txtPassword.Name = "txtPassword";
+            txtPassword.Size = new Size(197, 27);
+            txtPassword.TabIndex = 1;
+            txtPassword.UseSystemPasswordChar = true;
+            // 
             // btnLogin
-            this.btnLogin.Text = "Đăng nhập";
-            this.btnLogin.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            this.btnLogin.BackColor = Color.FromArgb(34, 112, 52);
-            this.btnLogin.ForeColor = Color.White;
-            this.btnLogin.FlatStyle = FlatStyle.Flat;
-            this.btnLogin.Location = new Point(380, 320);
-            this.btnLogin.Size = new Size(100, 35);
-            this.btnLogin.Click += BtnLogin_Click;
-
+            // 
+            btnLogin.BackColor = Color.FromArgb(34, 112, 52);
+            btnLogin.FlatStyle = FlatStyle.Flat;
+            btnLogin.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLogin.ForeColor = Color.White;
+            btnLogin.Location = new Point(296, 320);
+            btnLogin.Name = "btnLogin";
+            btnLogin.Size = new Size(131, 41);
+            btnLogin.TabIndex = 2;
+            btnLogin.Text = "Đăng nhập";
+            btnLogin.UseVisualStyleBackColor = false;
+            btnLogin.Click += BtnLogin_Click;
+            // 
             // btnExit
-            this.btnExit.Text = "Thoát";
-            this.btnExit.Font = new Font("Segoe UI", 10F);
-            this.btnExit.Location = new Point(490, 320);
-            this.btnExit.Size = new Size(60, 35);
-            this.btnExit.Click += BtnExit_Click;
-
+            // 
+            btnExit.Font = new Font("Segoe UI", 10F);
+            btnExit.Location = new Point(433, 320);
+            btnExit.Name = "btnExit";
+            btnExit.Size = new Size(131, 41);
+            btnExit.TabIndex = 3;
+            btnExit.Text = "Thoát";
+            btnExit.Click += BtnExit_Click;
+            // 
             // FormLogin
-            this.ClientSize = new Size(800, 420);
-            this.Controls.Add(this.pictureBoxLogo);
-            this.Controls.Add(this.labelTitle);
-            this.Controls.Add(this.labelUsername);
-            this.Controls.Add(this.txtUsername);
-            this.Controls.Add(this.labelPassword);
-            this.Controls.Add(this.txtPassword);
-            this.Controls.Add(this.btnLogin);
-            this.Controls.Add(this.btnExit);
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "FormLogin";
-            this.Load += FormLogin_Load;
-
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 420);
+            Controls.Add(pictureBoxLogo);
+            Controls.Add(labelTitle);
+            Controls.Add(labelUsername);
+            Controls.Add(txtUsername);
+            Controls.Add(labelPassword);
+            Controls.Add(txtPassword);
+            Controls.Add(btnLogin);
+            Controls.Add(btnExit);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            Name = "FormLogin";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "FormLogin";
+            Load += FormLogin_Load;
+            ((System.ComponentModel.ISupportInitialize)pictureBoxLogo).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
-        private PictureBox pictureBoxLogo;
-        private Label labelTitle;
-        private Label labelUsername;
-        private Label labelPassword;
-        private TextBox txtUsername;
-        private TextBox txtPassword;
-        private Button btnLogin;
-        private Button btnExit;
+        private System.Windows.Forms.PictureBox pictureBoxLogo;
+        private System.Windows.Forms.Label labelTitle;
+        private System.Windows.Forms.Label labelUsername;
+        private System.Windows.Forms.Label labelPassword;
+        private System.Windows.Forms.TextBox txtUsername;
+        private System.Windows.Forms.TextBox txtPassword;
+        private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.Button btnExit;
     }
 }
