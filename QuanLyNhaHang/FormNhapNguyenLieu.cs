@@ -105,13 +105,16 @@ namespace QuanLyNhaHang
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dtgvNguyenLieu.Rows[e.RowIndex];
-                txtTenNguyenLieu.Text = row.Cells["Tên nguyên liệu"].Value.ToString();
-                txtDonViTinh.Text = row.Cells["Đơn vị tính"].Value.ToString();
+                // Kiểm tra DBNull trước khi chuyển đổi
+                txtTenNguyenLieu.Text = row.Cells["Tên nguyên liệu"].Value != DBNull.Value ? row.Cells["Tên nguyên liệu"].Value.ToString() : string.Empty;
+                txtDonViTinh.Text = row.Cells["Đơn vị tính"].Value != DBNull.Value ? row.Cells["Đơn vị tính"].Value.ToString() : string.Empty;
                 txtSoLuong.Clear();
                 txtGiaNhap.Clear();
                 txtGhiChu.Clear();
                 dtpNgayNhap.Value = DateTime.Now;
-                int maNguyenLieu = Convert.ToInt32(row.Cells["Mã"].Value);
+
+                // Kiểm tra và lấy mã nguyên liệu
+                int maNguyenLieu = row.Cells["Mã"].Value != DBNull.Value ? Convert.ToInt32(row.Cells["Mã"].Value) : -1;
                 LoadLichSuNhap(maNguyenLieu);
             }
         }
@@ -121,7 +124,8 @@ namespace QuanLyNhaHang
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = @"SELECT MaPhieuNhap, SoLuong AS [Số lượng], GiaNhap AS [Giá nhập], NgayNhap AS [Ngày nhập], GhiChu AS [Ghi chú] FROM PhieuNhapNguyenLieu WHERE MaNguyenLieu = @ma ORDER BY NgayNhap DESC";
+                string query = @"SELECT MaPhieuNhap, SoLuong AS [Số lượng], GiaNhap AS [Giá nhập], NgayNhap AS [Ngày nhập], GhiChu AS [Ghi chú] 
+                        FROM PhieuNhapNguyenLieu WHERE MaNguyenLieu = @ma ORDER BY NgayNhap DESC";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ma", maNguyenLieu);
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -137,14 +141,15 @@ namespace QuanLyNhaHang
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dtgvLichSuNhap.Rows[e.RowIndex];
-                txtSoLuong.Text = row.Cells["Số lượng"].Value.ToString();
-                txtGiaNhap.Text = row.Cells["Giá nhập"].Value.ToString();
-                txtGhiChu.Text = row.Cells["Ghi chú"].Value?.ToString();
-                dtpNgayNhap.Value = Convert.ToDateTime(row.Cells["Ngày nhập"].Value);
-                idPhieuNhapDangChon = Convert.ToInt32(row.Cells["MaPhieuNhap"].Value);
+                // Kiểm tra DBNull trước khi lấy giá trị
+                txtSoLuong.Text = row.Cells["Số lượng"].Value != DBNull.Value ? row.Cells["Số lượng"].Value.ToString() : string.Empty;
+                txtGiaNhap.Text = row.Cells["Giá nhập"].Value != DBNull.Value ? row.Cells["Giá nhập"].Value.ToString() : string.Empty;
+                txtGhiChu.Text = row.Cells["Ghi chú"].Value != DBNull.Value ? row.Cells["Ghi chú"].Value?.ToString() : string.Empty;
+                dtpNgayNhap.Value = row.Cells["Ngày nhập"].Value != DBNull.Value ? Convert.ToDateTime(row.Cells["Ngày nhập"].Value) : DateTime.Now;
+
+                idPhieuNhapDangChon = row.Cells["MaPhieuNhap"].Value != DBNull.Value ? Convert.ToInt32(row.Cells["MaPhieuNhap"].Value) : -1;
             }
         }
-
         private void btnSua_Click(object sender, EventArgs e)
         {
             if (idPhieuNhapDangChon == -1)

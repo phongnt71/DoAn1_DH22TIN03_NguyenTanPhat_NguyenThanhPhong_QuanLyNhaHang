@@ -117,14 +117,14 @@
             // tạoMớiHóaĐơnToolStripMenuItem
             // 
             tạoMớiHóaĐơnToolStripMenuItem.Name = "tạoMớiHóaĐơnToolStripMenuItem";
-            tạoMớiHóaĐơnToolStripMenuItem.Size = new Size(219, 26);
+            tạoMớiHóaĐơnToolStripMenuItem.Size = new Size(224, 26);
             tạoMớiHóaĐơnToolStripMenuItem.Text = "Tạo mới hóa đơn";
             tạoMớiHóaĐơnToolStripMenuItem.Click += tạoMớiHóaĐơnToolStripMenuItem_Click;
             // 
             // danhSáchHóaĐơnToolStripMenuItem
             // 
             danhSáchHóaĐơnToolStripMenuItem.Name = "danhSáchHóaĐơnToolStripMenuItem";
-            danhSáchHóaĐơnToolStripMenuItem.Size = new Size(219, 26);
+            danhSáchHóaĐơnToolStripMenuItem.Size = new Size(224, 26);
             danhSáchHóaĐơnToolStripMenuItem.Text = "Danh sách hóa đơn";
             danhSáchHóaĐơnToolStripMenuItem.Click += danhSáchHóaĐơnToolStripMenuItem_Click;
             // 
@@ -159,14 +159,14 @@
             // tàiKhoảnToolStripMenuItem
             // 
             tàiKhoảnToolStripMenuItem.Name = "tàiKhoảnToolStripMenuItem";
-            tàiKhoảnToolStripMenuItem.Size = new Size(160, 26);
+            tàiKhoảnToolStripMenuItem.Size = new Size(224, 26);
             tàiKhoảnToolStripMenuItem.Text = "Tài khoản";
-            tàiKhoảnToolStripMenuItem.Click += tàiKhoảnToolStripMenuItem_Click;
+            tàiKhoảnToolStripMenuItem.Click += taiKhoanToolStripMenuItem_Click;
             // 
             // đăngXuấtToolStripMenuItem
             // 
             đăngXuấtToolStripMenuItem.Name = "đăngXuấtToolStripMenuItem";
-            đăngXuấtToolStripMenuItem.Size = new Size(160, 26);
+            đăngXuấtToolStripMenuItem.Size = new Size(224, 26);
             đăngXuấtToolStripMenuItem.Text = "Đăng xuất";
             đăngXuấtToolStripMenuItem.Click += đăngXuấtToolStripMenuItem_Click;
             // 

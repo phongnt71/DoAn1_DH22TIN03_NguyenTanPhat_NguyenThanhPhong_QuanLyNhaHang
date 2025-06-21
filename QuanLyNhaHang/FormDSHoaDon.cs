@@ -28,6 +28,7 @@ namespace QuanLyNhaHang
             picQR.SizeMode = PictureBoxSizeMode.Zoom;
         }
 
+
         private void FormDSHoaDon_Load(object sender, EventArgs e)
         {
             LoadDanhSachHoaDon();
@@ -52,15 +53,16 @@ namespace QuanLyNhaHang
         {
             using SqlConnection conn = new SqlConnection(connectionString);
             string query = @"
-                SELECT 
-                    HD.IDHoaDon, 
-                    HD.MaHoaDon, 
-                    HD.NgayLap, 
-                    HD.TongTien, 
-                    HD.TrangThai,
-                    BA.SoBan
-                FROM HoaDon HD
-                LEFT JOIN BanAn BA ON HD.SoBan = BA.IDBanAn";
+            SELECT 
+                HD.IDHoaDon, 
+                HD.MaHoaDon, 
+                HD.NgayLap, 
+                HD.TongTien, 
+                HD.TrangThai,
+                BA.SoBan,
+                HD.GhiChu -- Lấy thêm cột GhiChú
+            FROM HoaDon HD
+            LEFT JOIN BanAn BA ON HD.SoBan = BA.IDBanAn";
 
             SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
             DataTable dt = new DataTable();
@@ -76,7 +78,9 @@ namespace QuanLyNhaHang
             if (dtgvDSHoaDon.Columns["TongTien"] != null) dtgvDSHoaDon.Columns["TongTien"].HeaderText = "Tổng Tiền";
             if (dtgvDSHoaDon.Columns["TrangThai"] != null) dtgvDSHoaDon.Columns["TrangThai"].HeaderText = "Trạng Thái";
             if (dtgvDSHoaDon.Columns["SoBan"] != null) dtgvDSHoaDon.Columns["SoBan"].HeaderText = "Số Bàn";
+            if (dtgvDSHoaDon.Columns["GhiChu"] != null) dtgvDSHoaDon.Columns["GhiChu"].HeaderText = "Ghi Chú"; // Hiển thị Ghi Chú
         }
+
 
         private void LoadNhanVienVaoCombobox()
         {
@@ -117,9 +121,7 @@ namespace QuanLyNhaHang
                         dtpNgayLap.Value = chiTiet.NgayLap;
                         cmbNhanVien.SelectedValue = chiTiet.IDNhanVien;
                         txtTongTien.Text = chiTiet.TongTien + " VND";
-
-                        // Hiển thị ảnh loading tạm thời nếu có (nếu bạn có ảnh loading)
-                        // picQR.Image = Properties.Resources.loading;
+                        txtGhiChu.Text = chiTiet.GhiChu; 
 
                         await LoadQRCodeAsync(chiTiet.MaHoaDon, chiTiet.TongTien);
                     }
@@ -130,6 +132,7 @@ namespace QuanLyNhaHang
                 }
             }
         }
+
 
         private async Task LoadQRCodeAsync(string maHoaDon, decimal tongTien)
         {
@@ -155,11 +158,11 @@ namespace QuanLyNhaHang
         {
             using SqlConnection conn = new SqlConnection(connectionString);
             string query = @"
-                SELECT hd.MaHoaDon, hd.NgayLap, CAST(hd.TongTien AS INT) AS TongTien, kh.TenKH, nv.IDNhanVien
-                FROM HoaDon hd
-                LEFT JOIN KhachHang kh ON hd.IDKhachHang = kh.IDKhachHang
-                LEFT JOIN NhanVien nv ON hd.IDNhanVien = nv.IDNhanVien
-                WHERE hd.IDHoaDon = @IDHoaDon";
+        SELECT hd.MaHoaDon, hd.NgayLap, CAST(hd.TongTien AS INT) AS TongTien, kh.TenKH, nv.IDNhanVien, hd.GhiChu
+        FROM HoaDon hd
+        LEFT JOIN KhachHang kh ON hd.IDKhachHang = kh.IDKhachHang
+        LEFT JOIN NhanVien nv ON hd.IDNhanVien = nv.IDNhanVien
+        WHERE hd.IDHoaDon = @IDHoaDon";
 
             SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@IDHoaDon", idHoaDon);
@@ -175,20 +178,30 @@ namespace QuanLyNhaHang
                     NgayLap = reader["NgayLap"] != DBNull.Value ? Convert.ToDateTime(reader["NgayLap"]) : DateTime.Now,
                     TongTien = reader["TongTien"] != DBNull.Value ? Convert.ToInt32(reader["TongTien"]) : 0,
                     TenKhachHang = reader["TenKH"].ToString() ?? "",
-                    IDNhanVien = reader["IDNhanVien"] != DBNull.Value ? Convert.ToInt32(reader["IDNhanVien"]) : -1
+                    IDNhanVien = reader["IDNhanVien"] != DBNull.Value ? Convert.ToInt32(reader["IDNhanVien"]) : -1,
+                    GhiChu = reader["GhiChu"].ToString() ?? ""  // Lấy giá trị ghi chú
                 };
             }
             return null;
         }
 
+
+
         private void LoadChiTietMonAn(int idHoaDon)
         {
             using SqlConnection conn = new SqlConnection(connectionString);
             string query = @"
-                SELECT ct.IDMonAn, ma.TenMon, ct.SoLuong, ct.DonGia
-                FROM ChiTietHoaDon ct
-                INNER JOIN MonAn ma ON ct.IDMonAn = ma.IDMonAn
-                WHERE ct.IDHoaDon = @IDHoaDon";
+        SELECT 
+            ct.IDMonAn, 
+            ma.TenMon, 
+            ct.SoLuong, 
+            ct.DonGia, 
+            (ct.SoLuong * ct.DonGia) AS ThanhTien,  -- Tính toán ThanhTien
+            hd.GhiChu
+        FROM ChiTietHoaDon ct
+        INNER JOIN MonAn ma ON ct.IDMonAn = ma.IDMonAn
+        INNER JOIN HoaDon hd ON ct.IDHoaDon = hd.IDHoaDon
+        WHERE ct.IDHoaDon = @IDHoaDon";
 
             SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@IDHoaDon", idHoaDon);
@@ -197,8 +210,30 @@ namespace QuanLyNhaHang
             DataTable dt = new DataTable();
             adapter.Fill(dt);
 
-            dtgvChiTietMonAn.DataSource = dt;
+            // Kiểm tra xem dt có dữ liệu không
+            if (dt.Rows.Count > 0)
+            {
+                dtChiTietHD = dt; // Gán dữ liệu vào dtChiTietHD
+
+                dtgvChiTietMonAn.DataSource = dt;
+
+                // Đổi tên cột
+                dtgvChiTietMonAn.Columns["TenMon"].HeaderText = "Tên Món";
+                dtgvChiTietMonAn.Columns["SoLuong"].HeaderText = "Số Lượng";
+                dtgvChiTietMonAn.Columns["DonGia"].HeaderText = "Đơn Giá";
+                dtgvChiTietMonAn.Columns["ThanhTien"].HeaderText = "Thành Tiền";  // Thêm cột Thành Tiền
+                dtgvChiTietMonAn.Columns["GhiChu"].HeaderText = "Ghi Chú";
+            }
+            else
+            {
+                MessageBox.Show("Không có chi tiết hóa đơn.");
+            }
         }
+
+
+
+
+        private DataTable dtChiTietHD;
 
         private async Task TaoQRCodeAsync(string maHoaDon, int tongTien)
         {
@@ -222,7 +257,7 @@ namespace QuanLyNhaHang
         // Hàm in hóa đơn, cập nhật trạng thái, xóa hóa đơn giữ nguyên như bạn có
 
         private async Task TaoHoaDonWordAsync(string filePath, string maHoaDon, string tenKhachHang,
-    DateTime ngayLap, string tenNhanVien, decimal tongTien, Image qrImage)
+     DateTime ngayLap, string tenNhanVien, decimal tongTien, Image qrImage)
         {
             using MemoryStream memStream = new MemoryStream();
             using (WordprocessingDocument wordDoc = WordprocessingDocument.Create(memStream, WordprocessingDocumentType.Document, true))
@@ -231,6 +266,7 @@ namespace QuanLyNhaHang
                 mainPart.Document = new Document();
                 Body body = mainPart.Document.AppendChild(new Body());
 
+                // Thêm phần tiêu đề
                 void ThemDoan(string text, bool bold = false, JustificationValues? justify = null)
                 {
                     var actualJustify = justify ?? JustificationValues.Left;
@@ -247,8 +283,36 @@ namespace QuanLyNhaHang
                 ThemDoan($"Ngày lập: {ngayLap:dd/MM/yyyy}");
                 ThemDoan($"Tên nhân viên: {tenNhanVien}");
                 ThemDoan($"Tổng tiền: {tongTien:N0} VND");
-                body.AppendChild(new Paragraph(new Run(new Text("")))); // dòng trống
 
+                body.AppendChild(new Paragraph(new Run(new Text("")))); // Dòng trống
+
+                // Thêm chi tiết món ăn
+                ThemDoan("Chi tiết món ăn:", true);
+
+                if (dtChiTietHD != null && dtChiTietHD.Rows.Count > 0)
+                {
+                    foreach (DataRow row in dtChiTietHD.Rows)
+                    {
+                        string tenMon = row["TenMon"].ToString();
+                        int soLuong = Convert.ToInt32(row["SoLuong"]);
+                        decimal donGia = Convert.ToDecimal(row["DonGia"]);
+                        decimal thanhTien = Convert.ToDecimal(row["ThanhTien"]);
+                        string ghiChu = row["GhiChu"].ToString();
+
+                        // Thêm món ăn vào tài liệu
+                        ThemDoan($"Món: {tenMon}, Số lượng: {soLuong}, Đơn giá: {donGia:N0} VND, Thành tiền: {thanhTien:N0} VND", false);
+
+                        // Thêm ghi chú nếu có
+                        if (!string.IsNullOrEmpty(ghiChu))
+                        {
+                            ThemDoan($"Ghi chú: {ghiChu}", false);
+                        }
+
+                        body.AppendChild(new Paragraph(new Run(new Text("")))); // Dòng trống sau mỗi món ăn
+                    }
+                }
+
+                // Thêm QR code nếu có
                 if (qrImage != null)
                 {
                     using MemoryStream qrStream = new MemoryStream();
@@ -261,15 +325,13 @@ namespace QuanLyNhaHang
                     AddImageToBody(mainPart.GetIdOfPart(imagePart), body);
                 }
 
-                // ❗ Quan trọng: Lưu document
+                // Lưu tài liệu
                 mainPart.Document.Save();
             }
 
-            // ❗ Ghi memory stream ra file
+            // Ghi vào file
             await File.WriteAllBytesAsync(filePath, memStream.ToArray());
         }
-
-
 
 
         private async Task AddImageFromUrlAsync(MainDocumentPart mainPart, string imageUrl)
@@ -516,6 +578,7 @@ namespace QuanLyNhaHang
             public int TongTien { get; set; }
             public string TenKhachHang { get; set; }
             public int IDNhanVien { get; set; }
+            public string GhiChu { get; set; }
         }
         public void LoadChiTietTheoIDHoaDon(int idHoaDon)
         {

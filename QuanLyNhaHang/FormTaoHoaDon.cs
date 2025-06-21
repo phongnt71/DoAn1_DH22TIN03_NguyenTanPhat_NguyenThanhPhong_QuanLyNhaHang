@@ -11,6 +11,8 @@ namespace QuanLyNhaHang
         private int currentIdHoaDon = -1;
         private string connectionString = @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;Trust Server Certificate=True";
         private DataTable dtChiTietHD;
+        private bool isAdding = false;
+        private bool isEditing = false;
 
         public FormTaoHoaDon()
         {
@@ -169,6 +171,59 @@ namespace QuanLyNhaHang
                 cmbSoBan.Text = "";
             }
         }
+        private void LoadSoBan(int? selectedID)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT IDBanAn, SoBan FROM BanAn WHERE TrangThai = N'Trống'";
+                if (selectedID.HasValue)
+                {
+                    query += " OR IDBanAn = @IDBanAn";
+                }
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                if (selectedID.HasValue)
+                    cmd.Parameters.AddWithValue("@IDBanAn", selectedID.Value);
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                cmbSoBan.DataSource = dt;
+                cmbSoBan.DisplayMember = "SoBan";
+                cmbSoBan.ValueMember = "IDBanAn";
+                cmbSoBan.SelectedIndex = -1;
+                cmbSoBan.Text = "";
+            }
+        }
+
+        private void LoadBanDatTruoc(int? selectedID = null)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT IDBanAn, SoBan FROM BanAn WHERE TrangThai = N'Đã đặt'";
+                if (selectedID.HasValue)
+                {
+                    query += " OR IDBanAn = @IDBanAn";
+                }
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                if (selectedID.HasValue)
+                    cmd.Parameters.AddWithValue("@IDBanAn", selectedID.Value);
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                cmbBanDatTruoc.DataSource = dt;
+                cmbBanDatTruoc.DisplayMember = "SoBan";
+                cmbBanDatTruoc.ValueMember = "IDBanAn";
+                cmbBanDatTruoc.SelectedIndex = -1;
+            }
+        }
+
 
         private void FormTaoHoaDon_Load(object sender, EventArgs e)
         {
@@ -179,7 +234,110 @@ namespace QuanLyNhaHang
             dtpNgayLap.Value = DateTime.Now;
             txtMaHoaDon.Text = GenerateInvoiceCode();
             cmbBanDatTruoc.SelectedIndexChanged += cmbBanDatTruoc_SelectedIndexChanged;
+            LoadHoaDonDaTao();
         }
+        private void LoadHoaDonDaTao()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+            SELECT h.MaHoaDon, k.TenKH, h.NgayLap, h.TongTien
+            FROM HoaDon h
+            JOIN KhachHang k ON h.IDKhachHang = k.IDKhachHang
+            WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
+
+                SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                dtgvHoaDonDaTao.DataSource = dt;
+                dtgvHoaDonDaTao.CellClick -= dtgvHoaDonDaTao_CellClick; // tránh double event
+                dtgvHoaDonDaTao.CellClick += dtgvHoaDonDaTao_CellClick;
+            }
+        }
+        private void dtgvHoaDonDaTao_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                // Lấy mã hóa đơn được chọn
+                string maHoaDon = dtgvHoaDonDaTao.Rows[e.RowIndex].Cells["MaHoaDon"].Value.ToString();
+
+                // Load chi tiết hóa đơn lên form
+                LoadHoaDonLenForm(maHoaDon);
+
+                // ==> ĐẶT TRẠNG THÁI CHỈNH SỬA
+                isEditing = true;
+
+                // ==> CẬP NHẬT TRẠNG THÁI BUTTON
+                SetButtonState(true);
+            }
+        }
+
+
+        private void LoadHoaDonLenForm(string maHoaDon)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string queryHD = @"SELECT IDHoaDon, IDNhanVien, IDKhachHang, NgayLap, TongTien, SoBan, GhiChu
+                           FROM HoaDon WHERE MaHoaDon = @MaHoaDon";
+                SqlCommand cmd = new SqlCommand(queryHD, conn);
+                cmd.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    currentIdHoaDon = (int)reader["IDHoaDon"];
+                    cmbNhanVien.SelectedValue = reader["IDNhanVien"];
+                    dtpNgayLap.Value = Convert.ToDateTime(reader["NgayLap"]);
+                    txtTongTien.Text = ((decimal)reader["TongTien"]).ToString("N0");
+                    txtMaHoaDon.Text = maHoaDon;
+                    txtGhiChu.Text = reader["GhiChu"].ToString();
+
+                    int? soBan = reader["SoBan"] != DBNull.Value ? (int?)Convert.ToInt32(reader["SoBan"]) : null;
+                    if (soBan.HasValue)
+                    {
+                        LoadSoBan(soBan);
+                        LoadBanDatTruoc(soBan);
+                        cmbSoBan.SelectedValue = soBan;
+                        chkMangVe.Checked = false;
+                    }
+                    else
+                    {
+                        LoadSoBan();
+                        LoadBanDatTruoc();
+                        cmbSoBan.SelectedIndex = -1;
+                        chkMangVe.Checked = true;
+                    }
+
+                    int idKH = (int)reader["IDKhachHang"];
+                    reader.Close();
+
+                    SqlCommand cmdKH = new SqlCommand("SELECT TenKH FROM KhachHang WHERE IDKhachHang = @id", conn);
+                    cmdKH.Parameters.AddWithValue("@id", idKH);
+                    object tenKH = cmdKH.ExecuteScalar();
+                    txtKhachHang.Text = tenKH != null ? tenKH.ToString() : "";
+
+                    string queryCT = @"SELECT c.IDMonAn, m.TenMon, c.SoLuong, c.DonGia
+                                FROM ChiTietHoaDon c
+                                JOIN MonAn m ON c.IDMonAn = m.IDMonAn
+                                WHERE c.IDHoaDon = @IDHoaDon";
+                    SqlCommand cmdCT = new SqlCommand(queryCT, conn);
+                    cmdCT.Parameters.AddWithValue("@IDHoaDon", currentIdHoaDon);
+                    SqlDataAdapter da = new SqlDataAdapter(cmdCT);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    dt.Columns.Add("ThanhTien", typeof(decimal), "SoLuong * DonGia");
+                    dtChiTietHD = dt;
+                    dtgvChiTietHD.DataSource = dtChiTietHD;
+                }
+            }
+            TinhTongTien();
+        }
+
 
         private void InitDataTable()
         {
@@ -367,6 +525,93 @@ namespace QuanLyNhaHang
                     return null;
             }
         }
+        private void ResetForm()
+        {
+            txtKhachHang.Text = "";
+            txtGhiChu.Text = "";
+            txtTongTien.Text = "0";
+            txtMaHoaDon.Text = GenerateInvoiceCode();
+            dtChiTietHD.Clear();
+            cmbSoBan.SelectedIndex = -1;
+            cmbBanDatTruoc.SelectedIndex = -1;
+            chkMangVe.Checked = false;
+            cmbNhanVien.SelectedIndex = -1;
+        }
+
+        private void SetButtonState(bool isEditingEnabled)
+        {
+            btnLuu.Enabled = !isEditingEnabled;
+            btnCapNhat.Enabled = isEditingEnabled;
+            btnHuy.Enabled = true;
+            btnThemHD.Enabled = true;
+        }
+
+        private void btnThemHD_Click(object sender, EventArgs e)
+        {
+            isAdding = true;
+            isEditing = false;
+
+            ResetForm();
+            SetButtonState(false);
+        }
+
+        private void btnCapNhat_Click(object sender, EventArgs e)
+        {
+            if (currentIdHoaDon <= 0)
+            {
+                MessageBox.Show("Vui lòng chọn hóa đơn cần chỉnh sửa từ danh sách.");
+                return;
+            }
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+                try
+                {
+                    // Xóa chi tiết cũ
+                    string deleteQuery = "DELETE FROM ChiTietHoaDon WHERE IDHoaDon = @IDHoaDon";
+                    SqlCommand deleteCmd = new SqlCommand(deleteQuery, conn, transaction);
+                    deleteCmd.Parameters.AddWithValue("@IDHoaDon", currentIdHoaDon);
+                    deleteCmd.ExecuteNonQuery();
+
+                    // Thêm chi tiết mới
+                    foreach (DataRow row in dtChiTietHD.Rows)
+                    {
+                        string insertQuery = @"
+                    INSERT INTO ChiTietHoaDon (IDHoaDon, IDMonAn, SoLuong, DonGia) 
+                    VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
+                        SqlCommand insertCmd = new SqlCommand(insertQuery, conn, transaction);
+                        insertCmd.Parameters.AddWithValue("@IDHoaDon", currentIdHoaDon);
+                        insertCmd.Parameters.AddWithValue("@IDMonAn", (int)row["IDMonAn"]);
+                        insertCmd.Parameters.AddWithValue("@SoLuong", (int)row["SoLuong"]);
+                        insertCmd.Parameters.AddWithValue("@DonGia", (decimal)row["DonGia"]);
+                        insertCmd.ExecuteNonQuery();
+                    }
+
+                    // Cập nhật tổng tiền, ghi chú
+                    string updateQuery = @"
+                UPDATE HoaDon
+                SET TongTien = @TongTien, GhiChu = @GhiChu
+                WHERE IDHoaDon = @IDHoaDon";
+                    SqlCommand updateCmd = new SqlCommand(updateQuery, conn, transaction);
+                    updateCmd.Parameters.AddWithValue("@TongTien", decimal.Parse(txtTongTien.Text));
+                    updateCmd.Parameters.AddWithValue("@GhiChu", txtGhiChu.Text.Trim());
+                    updateCmd.Parameters.AddWithValue("@IDHoaDon", currentIdHoaDon);
+                    updateCmd.ExecuteNonQuery();
+
+                    transaction.Commit();
+                    MessageBox.Show("Cập nhật hóa đơn thành công!");
+                    LoadHoaDonDaTao();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    MessageBox.Show("Lỗi khi cập nhật hóa đơn: " + ex.Message);
+                }
+            }
+        }
+
 
         private void btnLuu_Click(object sender, EventArgs e)
         {
@@ -375,6 +620,7 @@ namespace QuanLyNhaHang
                 MessageBox.Show("Vui lòng chọn bàn hoặc tích vào 'Mang về' trước khi lưu hóa đơn.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             string tenKhachHang = txtKhachHang.Text.Trim();
             if (string.IsNullOrEmpty(tenKhachHang))
             {
@@ -409,6 +655,8 @@ namespace QuanLyNhaHang
                 }
             }
 
+            string ghiChu = txtGhiChu.Text.Trim();  // Lấy giá trị ghi chú
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -418,9 +666,8 @@ namespace QuanLyNhaHang
                 {
                     string maHoaDon = txtMaHoaDon.Text;
 
-                    // Lấy giá trị số bàn
+                    // Lấy ID bàn nếu không phải mang về
                     int? idBan = null;
-
                     if (!chkMangVe.Checked)
                     {
                         if (cmbBanDatTruoc.SelectedValue != null)
@@ -429,9 +676,11 @@ namespace QuanLyNhaHang
                             idBan = (int)cmbSoBan.SelectedValue;
                     }
 
-                    string insertHD = @"INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan)
-                                VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan);
-                                SELECT SCOPE_IDENTITY();";
+                    // Insert hóa đơn
+                    string insertHD = @"
+                INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan, GhiChu)
+                VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan, @GhiChu);
+                SELECT SCOPE_IDENTITY();";
 
                     SqlCommand cmdHD = new SqlCommand(insertHD, conn, transaction);
                     cmdHD.Parameters.AddWithValue("@IDNhanVien", cmbNhanVien.SelectedValue);
@@ -441,13 +690,16 @@ namespace QuanLyNhaHang
                     cmdHD.Parameters.AddWithValue("@TrangThai", "Chưa thanh toán");
                     cmdHD.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
                     cmdHD.Parameters.AddWithValue("@SoBan", (object)idBan ?? DBNull.Value);
+                    cmdHD.Parameters.AddWithValue("@GhiChu", ghiChu);
 
                     int newIDHoaDon = Convert.ToInt32(cmdHD.ExecuteScalar());
 
+                    // Insert chi tiết hóa đơn
                     foreach (DataRow row in dtChiTietHD.Rows)
                     {
-                        string insertCTHD = @"INSERT INTO ChiTietHoaDon (IDHoaDon, IDMonAn, SoLuong, DonGia)
-                  VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
+                        string insertCTHD = @"
+                    INSERT INTO ChiTietHoaDon (IDHoaDon, IDMonAn, SoLuong, DonGia)
+                    VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
                         SqlCommand cmdCTHD = new SqlCommand(insertCTHD, conn, transaction);
                         cmdCTHD.Parameters.AddWithValue("@IDHoaDon", newIDHoaDon);
                         cmdCTHD.Parameters.AddWithValue("@IDMonAn", (int)row["IDMonAn"]);
@@ -457,40 +709,42 @@ namespace QuanLyNhaHang
                         cmdCTHD.ExecuteNonQuery();
                     }
 
-                    if (!chkMangVe.Checked)
+                    // Cập nhật trạng thái bàn nếu không mang về
+                    if (!chkMangVe.Checked && idBan.HasValue)
                     {
-                        if (idBan.HasValue)
-                        {
-                            string updateBan = "UPDATE BanAn SET TrangThai = N'Có người' WHERE IDBanAn = @IDBanAn";
-                            SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
-                            cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan.Value);
-                            cmdUpdateBan.ExecuteNonQuery();
-                        }
+                        string updateBan = "UPDATE BanAn SET TrangThai = N'Có người' WHERE IDBanAn = @IDBanAn";
+                        SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
+                        cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan.Value);
+                        cmdUpdateBan.ExecuteNonQuery();
                     }
 
                     transaction.Commit();
 
-                    // Cập nhật nguyên liệu sau khi lưu hóa đơn thành công
+                    // Trừ nguyên liệu
                     CapNhatNguyenLieuSauKhiTaoHoaDon(newIDHoaDon);
 
+                    // Tự động load lại hóa đơn vừa thêm
+                    LoadHoaDonDaTao();
+
                     MessageBox.Show("Lưu hóa đơn thành công!");
+
+                    // Reset form
                     dtChiTietHD.Clear();
                     txtTongTien.Text = "0";
                     txtKhachHang.Text = "";
+                    txtGhiChu.Text = "";
                     txtMaHoaDon.Text = GenerateInvoiceCode();
                     LoadSoBan();
                 }
                 catch (Exception ex)
                 {
-                    try
-                    {
-                        transaction.Rollback();
-                    }
-                    catch { }
+                    try { transaction.Rollback(); } catch { }
                     MessageBox.Show("Lỗi khi lưu hóa đơn: " + ex.Message);
                 }
             }
         }
+
+
 
 
         private void btnHuy_Click(object sender, EventArgs e)

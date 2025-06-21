@@ -46,9 +46,14 @@ namespace QuanLyNhaHang
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
+
                 dtgvKhachHang.DataSource = dt;
+
+                // Ẩn cột TichDiem
+                dtgvKhachHang.Columns["TichDiem"].Visible = false;
             }
         }
+
 
         private void ClearInputs()
         {

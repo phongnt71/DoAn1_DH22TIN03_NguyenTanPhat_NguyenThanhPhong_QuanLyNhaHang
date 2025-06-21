@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System; 
 using System.Windows.Forms;
 using System.IO;
 
@@ -27,12 +27,51 @@ namespace QuanLyNhaHang
                 if (ctl is MdiClient client)
                 {
                     client.BackgroundImage = Image.FromFile(imagePath);
-                    client.BackgroundImageLayout = ImageLayout.Stretch; // 👈 giữ bố cục ban đầu
-                    client.BackColor = Color.Black; // tránh nền trắng
+                    client.BackgroundImageLayout = ImageLayout.Stretch; // Giữ bố cục ban đầu
+                    client.BackColor = Color.Black; // Tránh nền trắng
                     break;
                 }
             }
+
+            // Cập nhật các icon cho menu items
+            SetMenuIcons();
         }
+
+        private void SetMenuIcons()
+        {
+            // Cập nhật icon cho các menu items
+            SetMenuItemIcon(bànĂnToolStripMenuItem, "dining-table.png");
+            SetMenuItemIcon(mónĂnToolStripMenuItem, "cutlery.png");
+            SetMenuItemIcon(nguyênLiệuToolStripMenuItem, "ingredients.png");
+            SetMenuItemIcon(hóaĐơnToolStripMenuItem, "file.png");
+            SetMenuItemIcon(kháchHàngToolStripMenuItem, "customer-review.png");
+            SetMenuItemIcon(nhânViênToolStripMenuItem, "teamwork.png");
+            SetMenuItemIcon(báoCáoToolStripMenuItem, "report.png");
+            SetMenuItemIcon(càiĐặtToolStripMenuItem, "settings.png");
+            SetMenuItemIcon(tàiKhoảnToolStripMenuItem, "user.png");
+            SetMenuItemIcon(đăngXuấtToolStripMenuItem, "logout.png");
+            SetMenuItemIcon(tạoMớiHóaĐơnToolStripMenuItem, "bill.png");
+            SetMenuItemIcon(danhSáchHóaĐơnToolStripMenuItem, "transaction-history.png");
+            SetMenuItemIcon(danhSáchNguyênLiệuToolStripMenuItem, "list.png");
+            SetMenuItemIcon(nhậpNguyênLiệuToolStripMenuItem, "ingredient.png");
+            SetMenuItemIcon(quảnLíBànToolStripMenuItem, "table.png");
+            SetMenuItemIcon(đặtBànToolStripMenuItem, "booking.png");
+        }
+
+        // Hàm cài đặt icon cho menu item
+        private void SetMenuItemIcon(ToolStripMenuItem menuItem, string imageName)
+        {
+            string imagePath = Path.Combine(Application.StartupPath, "Images", imageName);
+            if (File.Exists(imagePath))
+            {
+                menuItem.Image = Image.FromFile(imagePath);
+            }
+            else
+            {
+                MessageBox.Show($"Không tìm thấy tệp hình ảnh: {imagePath}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
 
 
@@ -171,7 +210,9 @@ namespace QuanLyNhaHang
 
         private void nhânViênToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (QuyenHienTai == "Admin" || QuyenHienTai == "QuanLy")
+            string quyen = Program.VaiTroDangNhap?.Trim().ToLower(); // loại bỏ khoảng trắng và chuẩn hóa chữ thường
+
+            if (quyen == "admin" || quyen == "quanly")
             {
                 foreach (Form frm in this.MdiChildren)
                 {
@@ -181,6 +222,7 @@ namespace QuanLyNhaHang
                         return;
                     }
                 }
+
                 FormNhanVien formNhanVien = new FormNhanVien();
                 formNhanVien.MdiParent = this;
                 formNhanVien.Show();
@@ -190,6 +232,8 @@ namespace QuanLyNhaHang
                 MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
+
+
 
         private void đăngXuấtToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -220,7 +264,7 @@ namespace QuanLyNhaHang
             }
         }
 
-        private void tàiKhoảnToolStripMenuItem_Click(object sender, EventArgs e)
+        private void taiKhoanToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (Form frm in this.MdiChildren)
             {
@@ -231,7 +275,7 @@ namespace QuanLyNhaHang
                 }
             }
 
-            FormTaiKhoan formTaiKhoan = new FormTaiKhoan();
+            FormTaiKhoan formTaiKhoan = new FormTaiKhoan(Program.TaiKhoanDangNhap); // Truyền tài khoản đăng nhập vào constructor
             formTaiKhoan.MdiParent = this; // Gán MDI cha là FormMain
             formTaiKhoan.Show(); // Mở form như MDI child
         }
@@ -265,6 +309,20 @@ namespace QuanLyNhaHang
             formNhap.MdiParent = this;
             formNhap.Show();
         }
+        private void tàiKhoảnToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form frm in this.MdiChildren)
+            {
+                if (frm is FormTaiKhoan)
+                {
+                    frm.Activate(); // Nếu form đã mở thì focus lại
+                    return;
+                }
+            }
 
+            FormTaiKhoan formTaiKhoan = new FormTaiKhoan(Program.TaiKhoanDangNhap); // Gọi constructor truyền tài khoản
+            formTaiKhoan.MdiParent = this; // Đặt form là MDI child
+            formTaiKhoan.Show();
+        }
     }
 }

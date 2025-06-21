@@ -53,8 +53,14 @@
             chkMangVe = new CheckBox();
             cmbBanDatTruoc = new ComboBox();
             label9 = new Label();
+            txtGhiChu = new TextBox();
+            label10 = new Label();
+            dtgvHoaDonDaTao = new DataGridView();
+            btnCapNhat = new Button();
+            btnThemHD = new Button();
             ((System.ComponentModel.ISupportInitialize)nudSoLuong).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dtgvChiTietHD).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dtgvHoaDonDaTao).BeginInit();
             SuspendLayout();
             // 
             // label1
@@ -158,7 +164,7 @@
             // 
             // txtTongTien
             // 
-            txtTongTien.Location = new Point(112, 368);
+            txtTongTien.Location = new Point(112, 411);
             txtTongTien.Name = "txtTongTien";
             txtTongTien.Size = new Size(250, 27);
             txtTongTien.TabIndex = 13;
@@ -166,7 +172,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(15, 375);
+            label7.Location = new Point(15, 418);
             label7.Name = "label7";
             label7.Size = new Size(72, 20);
             label7.TabIndex = 12;
@@ -178,12 +184,12 @@
             dtgvChiTietHD.Location = new Point(12, 173);
             dtgvChiTietHD.Name = "dtgvChiTietHD";
             dtgvChiTietHD.RowHeadersWidth = 51;
-            dtgvChiTietHD.Size = new Size(776, 189);
+            dtgvChiTietHD.Size = new Size(776, 109);
             dtgvChiTietHD.TabIndex = 14;
             // 
             // btnHuy
             // 
-            btnHuy.Location = new Point(112, 409);
+            btnHuy.Location = new Point(694, 409);
             btnHuy.Name = "btnHuy";
             btnHuy.Size = new Size(94, 29);
             btnHuy.TabIndex = 16;
@@ -192,7 +198,7 @@
             // 
             // btnLuu
             // 
-            btnLuu.Location = new Point(12, 409);
+            btnLuu.Location = new Point(594, 409);
             btnLuu.Name = "btnLuu";
             btnLuu.Size = new Size(94, 29);
             btnLuu.TabIndex = 15;
@@ -264,17 +270,68 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(412, 59);
+            label9.Location = new Point(412, 55);
             label9.Name = "label9";
             label9.Size = new Size(99, 20);
             label9.TabIndex = 23;
             label9.Text = "Bàn đặt trước";
+            // 
+            // txtGhiChu
+            // 
+            txtGhiChu.Location = new Point(532, 85);
+            txtGhiChu.Multiline = true;
+            txtGhiChu.Name = "txtGhiChu";
+            txtGhiChu.Size = new Size(239, 48);
+            txtGhiChu.TabIndex = 26;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(412, 88);
+            label10.Name = "label10";
+            label10.Size = new Size(58, 20);
+            label10.TabIndex = 25;
+            label10.Text = "Ghi chú";
+            // 
+            // dtgvHoaDonDaTao
+            // 
+            dtgvHoaDonDaTao.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dtgvHoaDonDaTao.Location = new Point(12, 288);
+            dtgvHoaDonDaTao.Name = "dtgvHoaDonDaTao";
+            dtgvHoaDonDaTao.RowHeadersWidth = 51;
+            dtgvHoaDonDaTao.Size = new Size(776, 115);
+            dtgvHoaDonDaTao.TabIndex = 27;
+            // 
+            // btnCapNhat
+            // 
+            btnCapNhat.Location = new Point(494, 409);
+            btnCapNhat.Name = "btnCapNhat";
+            btnCapNhat.Size = new Size(94, 29);
+            btnCapNhat.TabIndex = 29;
+            btnCapNhat.Text = "Cập nhật";
+            btnCapNhat.UseVisualStyleBackColor = true;
+            btnCapNhat.Click += btnCapNhat_Click;
+            // 
+            // btnThemHD
+            // 
+            btnThemHD.Location = new Point(394, 409);
+            btnThemHD.Name = "btnThemHD";
+            btnThemHD.Size = new Size(94, 29);
+            btnThemHD.TabIndex = 28;
+            btnThemHD.Text = "Thêm";
+            btnThemHD.UseVisualStyleBackColor = true;
+            btnThemHD.Click += btnThemHD_Click;
             // 
             // FormTaoHoaDon
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnCapNhat);
+            Controls.Add(btnThemHD);
+            Controls.Add(dtgvHoaDonDaTao);
+            Controls.Add(txtGhiChu);
+            Controls.Add(label10);
             Controls.Add(cmbBanDatTruoc);
             Controls.Add(label9);
             Controls.Add(chkMangVe);
@@ -306,6 +363,7 @@
             Load += FormTaoHoaDon_Load;
             ((System.ComponentModel.ISupportInitialize)nudSoLuong).EndInit();
             ((System.ComponentModel.ISupportInitialize)dtgvChiTietHD).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dtgvHoaDonDaTao).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -337,5 +395,10 @@
         private CheckBox chkMangVe;
         private ComboBox cmbBanDatTruoc;
         private Label label9;
+        private TextBox txtGhiChu;
+        private Label label10;
+        private DataGridView dtgvHoaDonDaTao;
+        private Button btnCapNhat;
+        private Button btnThemHD;
     }
 }

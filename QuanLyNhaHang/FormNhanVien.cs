@@ -17,6 +17,9 @@ namespace QuanLyNhaHang
             Load += FormNhanVien_Load;
 
             dtgvNhanVien.CellClick += DtgvNhanVien_CellClick;
+            dtgvNhanVien.CellFormatting += DtgvNhanVien_CellFormatting; // <== THÊM DÒNG NÀY
+
+            txtMatKhau.UseSystemPasswordChar = true; // <== ẨN MẬT KHẨU KHI NHẬP
 
             SetControlsEnabled(true);
             btnLuu.Enabled = false;
@@ -44,7 +47,7 @@ namespace QuanLyNhaHang
             cmbGioiTinh.Items.Clear();
             cmbGioiTinh.Items.Add("Nam");
             cmbGioiTinh.Items.Add("Nữ");
-            cmbGioiTinh.SelectedIndex = -1;  // Không chọn mặc định
+            cmbGioiTinh.SelectedIndex = -1;
         }
 
         private void LoadDataNhanVien()
@@ -87,16 +90,10 @@ namespace QuanLyNhaHang
                 txtDiaChi.Text = row.Cells["DiaChi"].Value?.ToString();
                 cmbGioiTinh.Text = row.Cells["GioiTinh"].Value?.ToString();
 
-                // Kiểm tra nếu ngày sinh không phải là null
                 if (row.Cells["NgaySinh"].Value != DBNull.Value)
-                {
                     dtpNgaySinh.Value = Convert.ToDateTime(row.Cells["NgaySinh"].Value);
-                }
                 else
-                {
-                    // Nếu là null, đặt giá trị mặc định là ngày hiện tại
                     dtpNgaySinh.Value = DateTime.Now;
-                }
 
                 btnSua.Enabled = true;
                 btnXoa.Enabled = true;
@@ -105,20 +102,19 @@ namespace QuanLyNhaHang
             }
         }
 
+        private void DtgvNhanVien_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dtgvNhanVien.Columns[e.ColumnIndex].Name == "MatKhau" && e.Value != null)
+            {
+                e.Value = "*******"; // luôn hiển thị đúng 7 ký tự *
+                e.FormattingApplied = true;
+            }
+        }
 
         private void btnThem_Click(object sender, EventArgs e)
         {
             txtIDNhanVien.Enabled = false;
-            txtTenNhanVien.Enabled = true;
-            txtTaiKhoan.Enabled = true;
-            txtMatKhau.Enabled = true;
-            cmbQuyen.Enabled = true;
-            txtSoDienThoai.Enabled = true;
-            txtEmail.Enabled = true;
-            txtDiaChi.Enabled = true;
-            cmbGioiTinh.Enabled = true;
-            dtpNgaySinh.Enabled = true;
-
+            SetControlsEnabled(true);
             ClearInputs();
 
             btnLuu.Enabled = true;
@@ -136,7 +132,7 @@ namespace QuanLyNhaHang
                 MessageBox.Show("Vui lòng chọn nhân viên để sửa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            SetControlsEnabled(false);
+            SetControlsEnabled(true);
             btnLuu.Enabled = true;
             btnHuy.Enabled = true;
 
@@ -164,7 +160,6 @@ namespace QuanLyNhaHang
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@IDNhanVien", idNhanVien);
                     cmd.ExecuteNonQuery();
-                    conn.Close();
                 }
 
                 LoadDataNhanVien();
@@ -183,7 +178,6 @@ namespace QuanLyNhaHang
                 return;
             }
 
-            // Kiểm tra xem nhân viên đã đủ 18 tuổi chưa
             if (!IsValidAge(dtpNgaySinh.Value))
             {
                 MessageBox.Show("Nhân viên phải đủ 18 tuổi để được thêm vào hệ thống.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -197,10 +191,10 @@ namespace QuanLyNhaHang
                 {
                     conn.Open();
 
-                    if (string.IsNullOrWhiteSpace(txtIDNhanVien.Text)) // Thêm mới
+                    if (string.IsNullOrWhiteSpace(txtIDNhanVien.Text))
                     {
                         string queryInsert = @"INSERT INTO NhanVien (TenNV, TaiKhoan, MatKhau, Quyen, SoDienThoai, Email, DiaChi, GioiTinh, NgaySinh) 
-                                       VALUES (@TenNV, @TaiKhoan, @MatKhau, @Quyen, @SoDienThoai, @Email, @DiaChi, @GioiTinh, @NgaySinh)";
+                                               VALUES (@TenNV, @TaiKhoan, @MatKhau, @Quyen, @SoDienThoai, @Email, @DiaChi, @GioiTinh, @NgaySinh)";
                         SqlCommand cmd = new SqlCommand(queryInsert, conn);
                         cmd.Parameters.AddWithValue("@TenNV", txtTenNhanVien.Text);
                         cmd.Parameters.AddWithValue("@TaiKhoan", txtTaiKhoan.Text);
@@ -213,11 +207,11 @@ namespace QuanLyNhaHang
                         cmd.Parameters.AddWithValue("@NgaySinh", dtpNgaySinh.Value);
                         cmd.ExecuteNonQuery();
                     }
-                    else // Cập nhật
+                    else
                     {
                         string queryUpdate = @"UPDATE NhanVien SET TenNV = @TenNV, TaiKhoan = @TaiKhoan, MatKhau = @MatKhau, Quyen = @Quyen, 
-                                       SoDienThoai = @SoDienThoai, Email = @Email, DiaChi = @DiaChi, GioiTinh = @GioiTinh, NgaySinh = @NgaySinh
-                                       WHERE IDNhanVien = @IDNhanVien";
+                                               SoDienThoai = @SoDienThoai, Email = @Email, DiaChi = @DiaChi, GioiTinh = @GioiTinh, NgaySinh = @NgaySinh
+                                               WHERE IDNhanVien = @IDNhanVien";
                         SqlCommand cmd = new SqlCommand(queryUpdate, conn);
                         cmd.Parameters.AddWithValue("@TenNV", txtTenNhanVien.Text);
                         cmd.Parameters.AddWithValue("@TaiKhoan", txtTaiKhoan.Text);
@@ -231,7 +225,6 @@ namespace QuanLyNhaHang
                         cmd.Parameters.AddWithValue("@IDNhanVien", int.Parse(txtIDNhanVien.Text));
                         cmd.ExecuteNonQuery();
                     }
-                    conn.Close();
                 }
 
                 LoadDataNhanVien();
@@ -253,23 +246,17 @@ namespace QuanLyNhaHang
             }
         }
 
-        // Hàm kiểm tra độ tuổi của nhân viên
         private bool IsValidAge(DateTime? birthDate)
         {
-            if (birthDate == null)
-            {
-                return false; // Kiểm tra nếu ngày sinh là null
-            }
+            if (birthDate == null) return false;
 
             int age = DateTime.Now.Year - birthDate.Value.Year;
-            if (DateTime.Now.Month < birthDate.Value.Month || (DateTime.Now.Month == birthDate.Value.Month && DateTime.Now.Day < birthDate.Value.Day))
-            {
+            if (DateTime.Now.Month < birthDate.Value.Month ||
+               (DateTime.Now.Month == birthDate.Value.Month && DateTime.Now.Day < birthDate.Value.Day))
                 age--;
-            }
+
             return age >= 18;
         }
-
-
 
         private void btnHuy_Click(object sender, EventArgs e)
         {
@@ -315,20 +302,14 @@ namespace QuanLyNhaHang
 
         private bool KiemTraThongTin()
         {
-            if (string.IsNullOrWhiteSpace(txtTenNhanVien.Text) ||
-                string.IsNullOrWhiteSpace(txtTaiKhoan.Text) ||
-                string.IsNullOrWhiteSpace(txtMatKhau.Text) ||
-                cmbQuyen.SelectedIndex == -1 ||
-                string.IsNullOrWhiteSpace(txtSoDienThoai.Text) ||
-                string.IsNullOrWhiteSpace(txtEmail.Text) ||
-                string.IsNullOrWhiteSpace(txtDiaChi.Text) ||
-                cmbGioiTinh.SelectedIndex == -1 ||
-                dtpNgaySinh.Value == null)
-            {
-                return false;
-            }
-            return true;
+            return !string.IsNullOrWhiteSpace(txtTenNhanVien.Text) &&
+                   !string.IsNullOrWhiteSpace(txtTaiKhoan.Text) &&
+                   !string.IsNullOrWhiteSpace(txtMatKhau.Text) &&
+                   cmbQuyen.SelectedIndex != -1 &&
+                   !string.IsNullOrWhiteSpace(txtSoDienThoai.Text) &&
+                   !string.IsNullOrWhiteSpace(txtEmail.Text) &&
+                   !string.IsNullOrWhiteSpace(txtDiaChi.Text) &&
+                   cmbGioiTinh.SelectedIndex != -1;
         }
-
     }
 }

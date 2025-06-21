@@ -44,6 +44,8 @@
             dtgvDSHoaDon = new DataGridView();
             dtgvChiTietMonAn = new DataGridView();
             btnXoa = new Button();
+            txtGhiChu = new TextBox();
+            label1 = new Label();
             ((System.ComponentModel.ISupportInitialize)picQR).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dtgvDSHoaDon).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dtgvChiTietMonAn).BeginInit();
@@ -68,7 +70,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(371, 318);
+            label5.Location = new Point(374, 318);
             label5.Name = "label5";
             label5.Size = new Size(75, 20);
             label5.TabIndex = 60;
@@ -140,7 +142,7 @@
             // 
             // btnLamMoi
             // 
-            btnLamMoi.Location = new Point(471, 384);
+            btnLamMoi.Location = new Point(138, 410);
             btnLamMoi.Name = "btnLamMoi";
             btnLamMoi.Size = new Size(94, 29);
             btnLamMoi.TabIndex = 51;
@@ -150,7 +152,7 @@
             // 
             // btnInHoaDon
             // 
-            btnInHoaDon.Location = new Point(371, 384);
+            btnInHoaDon.Location = new Point(38, 410);
             btnInHoaDon.Name = "btnInHoaDon";
             btnInHoaDon.Size = new Size(94, 29);
             btnInHoaDon.TabIndex = 50;
@@ -178,7 +180,7 @@
             // 
             // btnXoa
             // 
-            btnXoa.Location = new Point(571, 384);
+            btnXoa.Location = new Point(238, 410);
             btnXoa.Name = "btnXoa";
             btnXoa.Size = new Size(94, 29);
             btnXoa.TabIndex = 66;
@@ -186,11 +188,30 @@
             btnXoa.UseVisualStyleBackColor = true;
             btnXoa.Click += btnXoa_Click;
             // 
+            // txtGhiChu
+            // 
+            txtGhiChu.Location = new Point(471, 377);
+            txtGhiChu.Multiline = true;
+            txtGhiChu.Name = "txtGhiChu";
+            txtGhiChu.Size = new Size(220, 61);
+            txtGhiChu.TabIndex = 68;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(374, 384);
+            label1.Name = "label1";
+            label1.Size = new Size(58, 20);
+            label1.TabIndex = 67;
+            label1.Text = "Ghi chú";
+            // 
             // FormDSHoaDon
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(txtGhiChu);
+            Controls.Add(label1);
             Controls.Add(btnXoa);
             Controls.Add(dtgvChiTietMonAn);
             Controls.Add(picQR);
@@ -236,5 +257,7 @@
         private DataGridView dtgvDSHoaDon;
         private DataGridView dtgvChiTietMonAn;
         private Button btnXoa;
+        private TextBox txtGhiChu;
+        private Label label1;
     }
 }

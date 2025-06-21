@@ -1,6 +1,9 @@
 ﻿using System;
-using Microsoft.Data.SqlClient;
+using System.Data;
+using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
+using Microsoft.Data.SqlClient;
 
 namespace QuanLyNhaHang
 {
@@ -12,9 +15,21 @@ namespace QuanLyNhaHang
         {
             InitializeComponent();
             this.Load += FormLogin_Load;
-
             txtUsername.KeyDown += TxtUsername_KeyDown;
             txtPassword.KeyDown += TxtPassword_KeyDown;
+        }
+
+        private void FormLogin_Load(object sender, EventArgs e)
+        {
+            txtUsername.Clear();
+            txtPassword.Clear();
+            txtUsername.Focus();
+
+            string logoPath = Path.Combine(Application.StartupPath, "Images", "LogoLogin.png");
+            if (File.Exists(logoPath))
+            {
+                pictureBoxLogo.Image = Image.FromFile(logoPath);
+            }
         }
 
         private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
@@ -31,105 +46,97 @@ namespace QuanLyNhaHang
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
-                BtnLogin_Click(sender, EventArgs.Empty);
+                btnLogin_Click(sender, EventArgs.Empty);
             }
         }
 
-        private void FormLogin_Load(object sender, EventArgs e)
-        {
-            txtUsername.Clear();
-            txtPassword.Clear();
-            txtUsername.Focus();
-            string logoPath = Path.Combine(Application.StartupPath, "Images", "LogoLogin.png");
-            if (File.Exists(logoPath))
-            {
-                pictureBoxLogo.Image = Image.FromFile(logoPath);
-            }
-        }
-
-        private void BtnLogin_Click(object sender, EventArgs e)
+        private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text.Trim();
 
-            if (string.IsNullOrEmpty(username))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Vui lòng nhập tên đăng nhập.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtUsername.Focus();
+                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (string.IsNullOrEmpty(password))
-            {
-                MessageBox.Show("Vui lòng nhập mật khẩu.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtPassword.Focus();
-                return;
-            }
-
-            string role = GetUserRole(username, password);
-            if (!string.IsNullOrEmpty(role))
-            {
-                Program.TaiKhoanDangNhap = username;
-                Program.VaiTroDangNhap = role;
-
-                this.Hide();
-
-                FormMain mainForm = new FormMain();
-                mainForm.QuyenHienTai = role;
-                mainForm.ShowDialog();
-
-                this.Close();
-            }
-
-            else
-            {
-                MessageBox.Show("Tên đăng nhập hoặc mật khẩu không đúng!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtPassword.Clear();
-                txtPassword.Focus();
-            }
-        }
-
-        private string GetUserRole(string username, string password)
-        {
-            string role = "";
-            string query = "SELECT Quyen FROM NhanVien WHERE TaiKhoan=@username AND MatKhau=@password";
-
-            using SqlConnection conn = new SqlConnection(connectionString);
-            using SqlCommand cmd = new SqlCommand(query, conn);
-
-            cmd.Parameters.AddWithValue("@username", username);
-            cmd.Parameters.AddWithValue("@password", password);
 
             try
             {
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                if (result != null)
+                using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    role = result.ToString();
+                    conn.Open();
+                    string query = "SELECT Quyen, PhaiDoiMatKhau FROM NhanVien WHERE TaiKhoan = @tk AND MatKhau = @mk";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@tk", username);
+                        cmd.Parameters.AddWithValue("@mk", password);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string quyen = reader["Quyen"]?.ToString() ?? "";
+                                bool phaiDoiMK = false;
+
+                                if (reader["PhaiDoiMatKhau"] != DBNull.Value)
+                                {
+                                    phaiDoiMK = Convert.ToBoolean(reader["PhaiDoiMatKhau"]);
+                                }
+
+                                // Ghi nhớ thông tin đăng nhập
+                                Program.TaiKhoanDangNhap = username;
+                                Program.VaiTroDangNhap = quyen;
+
+                                if (phaiDoiMK)
+                                {
+                                    MessageBox.Show("Bạn cần đổi mật khẩu trước khi tiếp tục.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    this.Hide();
+                                    FormTaiKhoan doiMK = new FormTaiKhoan(username);
+                                    doiMK.ShowDialog();
+                                    this.Show();
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Đăng nhập thành công.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    this.Hide();
+                                    FormMain frmMain = new FormMain();
+                                    frmMain.ShowDialog();
+                                    this.Show();
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("Sai tên đăng nhập hoặc mật khẩu!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối cơ sở dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            return role;
         }
 
         private void BtnExit_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show(
-                "Bạn có chắc chắn muốn thoát?",
-                "Xác nhận thoát",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
+            DialogResult result = MessageBox.Show("Bạn có chắc chắn muốn thoát?", "Xác nhận thoát", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 Application.Exit();
             }
         }
 
+        private void linkQuenMatKhau_Click(object sender, EventArgs e)
+        {
+            FormQuenMatKhau frm = new FormQuenMatKhau();
+            frm.ShowDialog();
+        }
+
+        private void chkShowPassword_CheckedChanged(object sender, EventArgs e)
+        {
+            txtPassword.UseSystemPasswordChar = !chkShowPassword.Checked;
+        }
     }
 }
