@@ -257,7 +257,7 @@ namespace QuanLyNhaHang
         // Hàm in hóa đơn, cập nhật trạng thái, xóa hóa đơn giữ nguyên như bạn có
 
         private async Task TaoHoaDonWordAsync(string filePath, string maHoaDon, string tenKhachHang,
-     DateTime ngayLap, string tenNhanVien, decimal tongTien, Image qrImage)
+    DateTime ngayLap, string tenNhanVien, decimal tongTien, Image qrImage)
         {
             using MemoryStream memStream = new MemoryStream();
             using (WordprocessingDocument wordDoc = WordprocessingDocument.Create(memStream, WordprocessingDocumentType.Document, true))
@@ -266,7 +266,6 @@ namespace QuanLyNhaHang
                 mainPart.Document = new Document();
                 Body body = mainPart.Document.AppendChild(new Body());
 
-                // Thêm phần tiêu đề
                 void ThemDoan(string text, bool bold = false, JustificationValues? justify = null)
                 {
                     var actualJustify = justify ?? JustificationValues.Left;
@@ -277,6 +276,7 @@ namespace QuanLyNhaHang
                     body.AppendChild(para);
                 }
 
+                // Tiêu đề hóa đơn
                 ThemDoan("HÓA ĐƠN BÁN HÀNG", true, JustificationValues.Center);
                 ThemDoan($"Mã hóa đơn: {maHoaDon}", true);
                 ThemDoan($"Tên khách hàng: {tenKhachHang}");
@@ -286,8 +286,10 @@ namespace QuanLyNhaHang
 
                 body.AppendChild(new Paragraph(new Run(new Text("")))); // Dòng trống
 
-                // Thêm chi tiết món ăn
+                // Chi tiết món ăn
                 ThemDoan("Chi tiết món ăn:", true);
+
+                string ghiChuCuoi = "";
 
                 if (dtChiTietHD != null && dtChiTietHD.Rows.Count > 0)
                 {
@@ -297,22 +299,22 @@ namespace QuanLyNhaHang
                         int soLuong = Convert.ToInt32(row["SoLuong"]);
                         decimal donGia = Convert.ToDecimal(row["DonGia"]);
                         decimal thanhTien = Convert.ToDecimal(row["ThanhTien"]);
-                        string ghiChu = row["GhiChu"].ToString();
 
-                        // Thêm món ăn vào tài liệu
-                        ThemDoan($"Món: {tenMon}, Số lượng: {soLuong}, Đơn giá: {donGia:N0} VND, Thành tiền: {thanhTien:N0} VND", false);
+                        if (string.IsNullOrEmpty(ghiChuCuoi))
+                            ghiChuCuoi = row["GhiChu"].ToString();
 
-                        // Thêm ghi chú nếu có
-                        if (!string.IsNullOrEmpty(ghiChu))
-                        {
-                            ThemDoan($"Ghi chú: {ghiChu}", false);
-                        }
+                        ThemDoan($"Món: {tenMon}, Số lượng: {soLuong}, Đơn giá: {donGia:N0} VND, Thành tiền: {thanhTien:N0} VND");
+                        body.AppendChild(new Paragraph(new Run(new Text(""))));
+                    }
 
-                        body.AppendChild(new Paragraph(new Run(new Text("")))); // Dòng trống sau mỗi món ăn
+                    // Chỉ thêm ghi chú 1 lần ở cuối
+                    if (!string.IsNullOrWhiteSpace(ghiChuCuoi))
+                    {
+                        ThemDoan($"Ghi chú: {ghiChuCuoi}");
                     }
                 }
 
-                // Thêm QR code nếu có
+                // QR Code
                 if (qrImage != null)
                 {
                     using MemoryStream qrStream = new MemoryStream();
@@ -325,11 +327,9 @@ namespace QuanLyNhaHang
                     AddImageToBody(mainPart.GetIdOfPart(imagePart), body);
                 }
 
-                // Lưu tài liệu
                 mainPart.Document.Save();
             }
 
-            // Ghi vào file
             await File.WriteAllBytesAsync(filePath, memStream.ToArray());
         }
 
