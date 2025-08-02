@@ -24,6 +24,8 @@ namespace QuanLyNhaHang
             btnSua.Click += btnSua_Click;
             btnLuu.Click += btnLuu_Click;
             btnHuy.Click += btnHuy_Click;
+            btnCapNhat.Click += btnCapNhat_Click;
+            btnThemHD.Click += btnThemHD_Click;
             chkMangVe.CheckedChanged += chkMangVe_CheckedChanged;
         }
 

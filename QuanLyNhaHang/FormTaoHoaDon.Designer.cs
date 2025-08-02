@@ -310,7 +310,6 @@
             btnCapNhat.TabIndex = 29;
             btnCapNhat.Text = "Cập nhật";
             btnCapNhat.UseVisualStyleBackColor = true;
-            btnCapNhat.Click += btnCapNhat_Click;
             // 
             // btnThemHD
             // 
@@ -320,7 +319,6 @@
             btnThemHD.TabIndex = 28;
             btnThemHD.Text = "Thêm";
             btnThemHD.UseVisualStyleBackColor = true;
-            btnThemHD.Click += btnThemHD_Click;
             // 
             // FormTaoHoaDon
             // 
