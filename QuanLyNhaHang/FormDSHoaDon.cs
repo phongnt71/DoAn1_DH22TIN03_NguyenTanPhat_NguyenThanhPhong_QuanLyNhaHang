@@ -465,6 +465,15 @@ namespace QuanLyNhaHang
                 return;
             }
 
+            // Lấy trạng thái của hóa đơn
+            string trangThaiHoaDon = GetTrangThaiHoaDon(currentIdHoaDon);
+
+            if (trangThaiHoaDon != "Chưa thanh toán")
+            {
+                MessageBox.Show("Chỉ có thể xóa hóa đơn chưa thanh toán.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             DialogResult dr = MessageBox.Show("Bạn có chắc muốn xóa hóa đơn này không?", "Xác nhận", MessageBoxButtons.YesNo);
             if (dr == DialogResult.No) return;
 
@@ -504,6 +513,20 @@ namespace QuanLyNhaHang
             {
                 MessageBox.Show("Xóa hóa đơn thất bại.");
             }
+        }
+
+        private string GetTrangThaiHoaDon(int idHoaDon)
+        {
+            using SqlConnection conn = new SqlConnection(connectionString);
+            string query = "SELECT TrangThai FROM HoaDon WHERE IDHoaDon = @IDHoaDon";
+            SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@IDHoaDon", idHoaDon);
+
+            conn.Open();
+            object result = cmd.ExecuteScalar();
+            conn.Close();
+
+            return result?.ToString() ?? string.Empty;
         }
 
 

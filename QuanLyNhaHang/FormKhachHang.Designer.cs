@@ -165,7 +165,6 @@
             Name = "FormKhachHang";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "FormKhachHang";
-            Load += FormThemKhachHang_Load;
             ((System.ComponentModel.ISupportInitialize)dtgvKhachHang).EndInit();
             ResumeLayout(false);
             PerformLayout();

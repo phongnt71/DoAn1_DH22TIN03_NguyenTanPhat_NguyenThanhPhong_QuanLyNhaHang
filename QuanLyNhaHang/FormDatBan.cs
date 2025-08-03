@@ -77,7 +77,7 @@ namespace QuanLyNhaHang
                 DataTable dt = new DataTable();
                 da.Fill(dt);
 
-                cmbBanAn.DataSource = null; // ✅ reset lại để tránh lỗi
+                cmbBanAn.DataSource = null; 
                 cmbBanAn.DisplayMember = "SoBan";
                 cmbBanAn.ValueMember = "IDBanAn";
                 cmbBanAn.DataSource = dt;
@@ -128,7 +128,6 @@ namespace QuanLyNhaHang
                         }
                         else
                         {
-                            MessageBox.Show("Bạn chưa thêm khách hàng, không thể đặt bàn.");
                             return;
                         }
                     }

@@ -24,8 +24,8 @@ namespace QuanLyNhaHang
             btnSua.Click += btnSua_Click;
             btnLuu.Click += btnLuu_Click;
             btnHuy.Click += btnHuy_Click;
-            btnCapNhat.Click += btnCapNhat_Click;
             btnThemHD.Click += btnThemHD_Click;
+            btnCapNhat.Click += btnCapNhat_Click;
             chkMangVe.CheckedChanged += chkMangVe_CheckedChanged;
         }
 
@@ -613,7 +613,7 @@ namespace QuanLyNhaHang
                 }
             }
         }
-
+        private bool isCustomerAdded = false; // Thêm thuộc tính này
 
         private void btnLuu_Click(object sender, EventArgs e)
         {
@@ -624,14 +624,17 @@ namespace QuanLyNhaHang
             }
 
             string tenKhachHang = txtKhachHang.Text.Trim();
+
             if (string.IsNullOrEmpty(tenKhachHang))
             {
                 MessageBox.Show("Vui lòng nhập tên khách hàng.");
                 return;
             }
 
+            // Kiểm tra nếu khách hàng đã tồn tại trong cơ sở dữ liệu
             int? idKhachHang = GetKhachHangIdByName(tenKhachHang);
 
+            // Nếu khách hàng chưa tồn tại, mở FormKhachHang để thêm khách hàng
             if (idKhachHang == null)
             {
                 DialogResult dr = MessageBox.Show("Khách hàng chưa tồn tại. Bạn có muốn thêm khách hàng mới không?", "Thông báo", MessageBoxButtons.YesNo);
@@ -641,11 +644,17 @@ namespace QuanLyNhaHang
                     {
                         if (formThemKH.ShowDialog() == DialogResult.OK)
                         {
+                            // Sau khi thêm khách hàng, lấy ID khách hàng mới
                             idKhachHang = formThemKH.NewCustomerId;
+
+                            // Cập nhật lại tên khách hàng trong FormTaoHoaDon
+                            txtKhachHang.Text = tenKhachHang;
+
+                            // Đánh dấu là khách hàng đã được thêm
+                            isCustomerAdded = true;
                         }
                         else
-                        {
-                            MessageBox.Show("Bạn chưa thêm khách hàng, không thể lưu hóa đơn.");
+                        { 
                             return;
                         }
                     }
@@ -657,96 +666,103 @@ namespace QuanLyNhaHang
                 }
             }
 
-            string ghiChu = txtGhiChu.Text.Trim();  // Lấy giá trị ghi chú
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Kiểm tra nếu khách hàng đã được thêm
+            if (isCustomerAdded || !string.IsNullOrEmpty(tenKhachHang))
             {
-                conn.Open();
-                SqlTransaction transaction = conn.BeginTransaction();
+                string ghiChu = txtGhiChu.Text.Trim();  // Lấy giá trị ghi chú
 
-                try
+                using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    string maHoaDon = txtMaHoaDon.Text;
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
 
-                    // Lấy ID bàn nếu không phải mang về
-                    int? idBan = null;
-                    if (!chkMangVe.Checked)
+                    try
                     {
-                        if (cmbBanDatTruoc.SelectedValue != null)
-                            idBan = (int)cmbBanDatTruoc.SelectedValue;
-                        else if (cmbSoBan.SelectedValue != null)
-                            idBan = (int)cmbSoBan.SelectedValue;
-                    }
+                        string maHoaDon = txtMaHoaDon.Text;
 
-                    // Insert hóa đơn
-                    string insertHD = @"
+                        // Lấy ID bàn nếu không phải mang về
+                        int? idBan = null;
+                        if (!chkMangVe.Checked)
+                        {
+                            if (cmbBanDatTruoc.SelectedValue != null)
+                                idBan = (int)cmbBanDatTruoc.SelectedValue;
+                            else if (cmbSoBan.SelectedValue != null)
+                                idBan = (int)cmbSoBan.SelectedValue;
+                        }
+
+                        // Insert hóa đơn
+                        string insertHD = @"
                 INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan, GhiChu)
                 VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan, @GhiChu);
                 SELECT SCOPE_IDENTITY();";
 
-                    SqlCommand cmdHD = new SqlCommand(insertHD, conn, transaction);
-                    cmdHD.Parameters.AddWithValue("@IDNhanVien", cmbNhanVien.SelectedValue);
-                    cmdHD.Parameters.AddWithValue("@IDKhachHang", idKhachHang.Value);
-                    cmdHD.Parameters.AddWithValue("@NgayLap", dtpNgayLap.Value);
-                    cmdHD.Parameters.AddWithValue("@TongTien", decimal.Parse(txtTongTien.Text));
-                    cmdHD.Parameters.AddWithValue("@TrangThai", "Chưa thanh toán");
-                    cmdHD.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
-                    cmdHD.Parameters.AddWithValue("@SoBan", (object)idBan ?? DBNull.Value);
-                    cmdHD.Parameters.AddWithValue("@GhiChu", ghiChu);
+                        SqlCommand cmdHD = new SqlCommand(insertHD, conn, transaction);
+                        cmdHD.Parameters.AddWithValue("@IDNhanVien", cmbNhanVien.SelectedValue);
+                        cmdHD.Parameters.AddWithValue("@IDKhachHang", idKhachHang.Value);
+                        cmdHD.Parameters.AddWithValue("@NgayLap", dtpNgayLap.Value);
+                        cmdHD.Parameters.AddWithValue("@TongTien", decimal.Parse(txtTongTien.Text));
+                        cmdHD.Parameters.AddWithValue("@TrangThai", "Chưa thanh toán");
+                        cmdHD.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
+                        cmdHD.Parameters.AddWithValue("@SoBan", (object)idBan ?? DBNull.Value);
+                        cmdHD.Parameters.AddWithValue("@GhiChu", ghiChu);
 
-                    int newIDHoaDon = Convert.ToInt32(cmdHD.ExecuteScalar());
+                        int newIDHoaDon = Convert.ToInt32(cmdHD.ExecuteScalar());
 
-                    // Insert chi tiết hóa đơn
-                    foreach (DataRow row in dtChiTietHD.Rows)
-                    {
-                        string insertCTHD = @"
+                        // Insert chi tiết hóa đơn
+                        foreach (DataRow row in dtChiTietHD.Rows)
+                        {
+                            string insertCTHD = @"
                     INSERT INTO ChiTietHoaDon (IDHoaDon, IDMonAn, SoLuong, DonGia)
                     VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
-                        SqlCommand cmdCTHD = new SqlCommand(insertCTHD, conn, transaction);
-                        cmdCTHD.Parameters.AddWithValue("@IDHoaDon", newIDHoaDon);
-                        cmdCTHD.Parameters.AddWithValue("@IDMonAn", (int)row["IDMonAn"]);
-                        cmdCTHD.Parameters.AddWithValue("@SoLuong", (int)row["SoLuong"]);
-                        cmdCTHD.Parameters.AddWithValue("@DonGia", (decimal)row["DonGia"]);
+                            SqlCommand cmdCTHD = new SqlCommand(insertCTHD, conn, transaction);
+                            cmdCTHD.Parameters.AddWithValue("@IDHoaDon", newIDHoaDon);
+                            cmdCTHD.Parameters.AddWithValue("@IDMonAn", (int)row["IDMonAn"]);
+                            cmdCTHD.Parameters.AddWithValue("@SoLuong", (int)row["SoLuong"]);
+                            cmdCTHD.Parameters.AddWithValue("@DonGia", (decimal)row["DonGia"]);
 
-                        cmdCTHD.ExecuteNonQuery();
+                            cmdCTHD.ExecuteNonQuery();
+                        }
+
+                        // Cập nhật trạng thái bàn nếu không mang về
+                        if (!chkMangVe.Checked && idBan.HasValue)
+                        {
+                            string updateBan = "UPDATE BanAn SET TrangThai = N'Có người' WHERE IDBanAn = @IDBanAn";
+                            SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
+                            cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan.Value);
+                            cmdUpdateBan.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+
+                        // Trừ nguyên liệu
+                        CapNhatNguyenLieuSauKhiTaoHoaDon(newIDHoaDon);
+
+                        // Tự động load lại hóa đơn vừa thêm
+                        LoadHoaDonDaTao();
+
+                        MessageBox.Show("Lưu hóa đơn thành công!");
+
+                        // Reset form
+                        dtChiTietHD.Clear();
+                        txtTongTien.Text = "0";
+                        txtKhachHang.Text = "";
+                        txtGhiChu.Text = "";
+                        txtMaHoaDon.Text = GenerateInvoiceCode();
+                        LoadSoBan();
                     }
-
-                    // Cập nhật trạng thái bàn nếu không mang về
-                    if (!chkMangVe.Checked && idBan.HasValue)
+                    catch (Exception ex)
                     {
-                        string updateBan = "UPDATE BanAn SET TrangThai = N'Có người' WHERE IDBanAn = @IDBanAn";
-                        SqlCommand cmdUpdateBan = new SqlCommand(updateBan, conn, transaction);
-                        cmdUpdateBan.Parameters.AddWithValue("@IDBanAn", idBan.Value);
-                        cmdUpdateBan.ExecuteNonQuery();
+                        try { transaction.Rollback(); } catch { }
+                        MessageBox.Show("Lỗi khi lưu hóa đơn: " + ex.Message);
                     }
-
-                    transaction.Commit();
-
-                    // Trừ nguyên liệu
-                    CapNhatNguyenLieuSauKhiTaoHoaDon(newIDHoaDon);
-
-                    // Tự động load lại hóa đơn vừa thêm
-                    LoadHoaDonDaTao();
-
-                    MessageBox.Show("Lưu hóa đơn thành công!");
-
-                    // Reset form
-                    dtChiTietHD.Clear();
-                    txtTongTien.Text = "0";
-                    txtKhachHang.Text = "";
-                    txtGhiChu.Text = "";
-                    txtMaHoaDon.Text = GenerateInvoiceCode();
-                    LoadSoBan();
-                }
-                catch (Exception ex)
-                {
-                    try { transaction.Rollback(); } catch { }
-                    MessageBox.Show("Lỗi khi lưu hóa đơn: " + ex.Message);
                 }
             }
+            else
+            {
+                MessageBox.Show("Vui lòng nhập tên khách hàng.");
+                return;
+            }
         }
-
-
 
 
         private void btnHuy_Click(object sender, EventArgs e)

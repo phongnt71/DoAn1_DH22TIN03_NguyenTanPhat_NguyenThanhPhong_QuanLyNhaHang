@@ -184,6 +184,21 @@ namespace QuanLyNhaHang
                 return;
             }
 
+            string username = txtTaiKhoan.Text.Trim();
+            string email = txtEmail.Text.Trim();
+
+            if (IsUsernameDuplicate(username))
+            {
+                MessageBox.Show("Tài khoản này đã tồn tại. Vui lòng chọn tài khoản khác.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (IsEmailDuplicate(email))
+            {
+                MessageBox.Show("Email này đã tồn tại. Vui lòng chọn email khác.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             try
             {
                 isSaving = true;
@@ -243,6 +258,32 @@ namespace QuanLyNhaHang
             finally
             {
                 isSaving = false;
+            }
+        }
+
+        private bool IsUsernameDuplicate(string username)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT COUNT(*) FROM NhanVien WHERE TaiKhoan = @TaiKhoan";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@TaiKhoan", username);
+                int count = (int)cmd.ExecuteScalar();
+                return count > 0;
+            }
+        }
+
+        private bool IsEmailDuplicate(string email)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT COUNT(*) FROM NhanVien WHERE Email = @Email";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Email", email);
+                int count = (int)cmd.ExecuteScalar();
+                return count > 0;
             }
         }
 
