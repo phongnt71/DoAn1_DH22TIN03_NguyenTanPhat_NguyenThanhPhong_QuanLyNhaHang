@@ -282,32 +282,54 @@ namespace QuanLyNhaHang
 
         private void danhSáchNguyênLiệuToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (Form frm in this.MdiChildren)
+            string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
+
+            if (quyen == "admin" || quyen == "quanly")
             {
-                if (frm is FormNguyenLieu)
+                foreach (Form frm in this.MdiChildren)
                 {
-                    frm.Activate();
-                    return;
+                    if (frm is FormNguyenLieu)
+                    {
+                        frm.Activate();
+                        return;
+                    }
                 }
+
+                FormNguyenLieu formNguyenLieu = new FormNguyenLieu();
+                formNguyenLieu.MdiParent = this;
+                formNguyenLieu.Show();
             }
-            FormNguyenLieu formNguyenLieu = new FormNguyenLieu();
-            formNguyenLieu.MdiParent = this;
-            formNguyenLieu.Show();
+            else
+            {
+                MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Thông báo",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void nhậpNguyênLiệuToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (Form frm in this.MdiChildren)
+            string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
+
+            if (quyen == "admin" || quyen == "quanly")
             {
-                if (frm is FormNhapNguyenLieu)
+                foreach (Form frm in this.MdiChildren)
                 {
-                    frm.Activate();
-                    return;
+                    if (frm is FormNhapNguyenLieu)
+                    {
+                        frm.Activate();
+                        return;
+                    }
                 }
+
+                FormNhapNguyenLieu formNhap = new FormNhapNguyenLieu();
+                formNhap.MdiParent = this;
+                formNhap.Show();
             }
-            FormNhapNguyenLieu formNhap = new FormNhapNguyenLieu();
-            formNhap.MdiParent = this;
-            formNhap.Show();
+            else
+            {
+                MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Thông báo",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
         private void tàiKhoảnToolStripMenuItem_Click(object sender, EventArgs e)
         {
