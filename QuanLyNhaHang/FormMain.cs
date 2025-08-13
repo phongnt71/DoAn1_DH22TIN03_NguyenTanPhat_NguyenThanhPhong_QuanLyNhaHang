@@ -116,18 +116,36 @@ namespace QuanLyNhaHang
 
         private void mónĂnToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (Form frm in this.MdiChildren)
+            // Lấy vai trò của người dùng đang đăng nhập và loại bỏ khoảng trắng.
+            string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
+
+            // Kiểm tra xem người dùng có quyền truy cập hay không (admin hoặc quanly).
+            if (quyen == "admin" || quyen == "quanly")
             {
-                if (frm is FormMonAn)
+                // Kiểm tra xem form 'FormMonAn' đã mở hay chưa.
+                foreach (Form frm in this.MdiChildren)
                 {
-                    frm.Activate();
-                    return;
+                    if (frm is FormMonAn)
+                    {
+                        // Nếu form đã mở, kích hoạt nó.
+                        frm.Activate();
+                        return;
+                    }
                 }
+
+                // Nếu form chưa mở, tạo và hiển thị một instance mới của 'FormMonAn'.
+                FormMonAn formMonAn = new FormMonAn();
+                formMonAn.MdiParent = this;
+                formMonAn.Show();
             }
-            FormMonAn formMonAn = new FormMonAn();
-            formMonAn.MdiParent = this;
-            formMonAn.Show();
+            else
+            {
+                // Hiển thị thông báo nếu người dùng không có quyền truy cập.
+                MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Thông báo",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
+
 
         private void tạoMớiHóaĐơnToolStripMenuItem_Click(object sender, EventArgs e)
         {
