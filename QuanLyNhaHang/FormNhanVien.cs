@@ -266,9 +266,10 @@ namespace QuanLyNhaHang
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT COUNT(*) FROM NhanVien WHERE TaiKhoan = @TaiKhoan";
+                string query = "SELECT COUNT(*) FROM NhanVien WHERE TaiKhoan = @TaiKhoan AND IDNhanVien != @IDNhanVien";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@TaiKhoan", username);
+                cmd.Parameters.AddWithValue("@IDNhanVien", txtIDNhanVien.Text);
                 int count = (int)cmd.ExecuteScalar();
                 return count > 0;
             }
@@ -279,13 +280,15 @@ namespace QuanLyNhaHang
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT COUNT(*) FROM NhanVien WHERE Email = @Email";
+                string query = "SELECT COUNT(*) FROM NhanVien WHERE Email = @Email AND IDNhanVien != @IDNhanVien";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@IDNhanVien", txtIDNhanVien.Text);
                 int count = (int)cmd.ExecuteScalar();
                 return count > 0;
             }
         }
+
 
         private bool IsValidAge(DateTime? birthDate)
         {
