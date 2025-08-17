@@ -120,7 +120,7 @@ namespace QuanLyNhaHang
             string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
 
             // Kiểm tra xem người dùng có quyền truy cập hay không (admin hoặc quanly).
-            if (quyen == "admin" || quyen == "quanly")
+            if (quyen == "quản lý")
             {
                 // Kiểm tra xem form 'FormMonAn' đã mở hay chưa.
                 foreach (Form frm in this.MdiChildren)
@@ -230,7 +230,7 @@ namespace QuanLyNhaHang
         {
             string quyen = Program.VaiTroDangNhap?.Trim().ToLower(); // loại bỏ khoảng trắng và chuẩn hóa chữ thường
 
-            if (quyen == "admin" || quyen == "quanly")
+            if (quyen == "quản lý")
             {
                 foreach (Form frm in this.MdiChildren)
                 {
@@ -302,7 +302,7 @@ namespace QuanLyNhaHang
         {
             string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
 
-            if (quyen == "admin" || quyen == "quanly")
+            if (quyen == "quản lý")
             {
                 foreach (Form frm in this.MdiChildren)
                 {
@@ -328,7 +328,7 @@ namespace QuanLyNhaHang
         {
             string quyen = Program.VaiTroDangNhap?.Trim().ToLower();
 
-            if (quyen == "admin" || quyen == "quanly")
+            if (quyen == "quản lý")
             {
                 foreach (Form frm in this.MdiChildren)
                 {

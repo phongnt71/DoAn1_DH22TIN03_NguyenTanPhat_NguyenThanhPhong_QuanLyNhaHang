@@ -41,7 +41,11 @@
             btnThem = new Button();
             dtgvDatBan = new DataGridView();
             btnLamMoi = new Button();
+            label12 = new Label();
+            label11 = new Label();
+            nudThoiLuong = new NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)dtgvDatBan).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudThoiLuong).BeginInit();
             SuspendLayout();
             // 
             // txtTenKhachHang
@@ -97,7 +101,7 @@
             // dtpGioDat
             // 
             dtpGioDat.Format = DateTimePickerFormat.Time;
-            dtpGioDat.Location = new Point(133, 112);
+            dtpGioDat.Location = new Point(444, 14);
             dtpGioDat.Name = "dtpGioDat";
             dtpGioDat.Size = new Size(151, 27);
             dtpGioDat.TabIndex = 32;
@@ -105,7 +109,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(10, 120);
+            label4.Location = new Point(310, 21);
             label4.Name = "label4";
             label4.Size = new Size(58, 20);
             label4.TabIndex = 31;
@@ -160,11 +164,39 @@
             btnLamMoi.UseVisualStyleBackColor = true;
             btnLamMoi.Click += btnLamMoi_Click;
             // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(551, 58);
+            label12.Name = "label12";
+            label12.Size = new Size(39, 20);
+            label12.TabIndex = 55;
+            label12.Text = "phút";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(306, 58);
+            label11.Name = "label11";
+            label11.Size = new Size(128, 20);
+            label11.TabIndex = 54;
+            label11.Text = "Thời gian sử dụng";
+            // 
+            // nudThoiLuong
+            // 
+            nudThoiLuong.Location = new Point(444, 51);
+            nudThoiLuong.Name = "nudThoiLuong";
+            nudThoiLuong.Size = new Size(101, 27);
+            nudThoiLuong.TabIndex = 53;
+            // 
             // FormDatBan
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(label12);
+            Controls.Add(label11);
+            Controls.Add(nudThoiLuong);
             Controls.Add(btnLamMoi);
             Controls.Add(dtgvDatBan);
             Controls.Add(btnXoa);
@@ -183,6 +215,7 @@
             Text = "FormDatBan";
             Load += FormDatBan_Load;
             ((System.ComponentModel.ISupportInitialize)dtgvDatBan).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudThoiLuong).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -202,5 +235,8 @@
         private Button btnThem;
         private DataGridView dtgvDatBan;
         private Button btnLamMoi;
+        private Label label12;
+        private Label label11;
+        private NumericUpDown nudThoiLuong;
     }
 }

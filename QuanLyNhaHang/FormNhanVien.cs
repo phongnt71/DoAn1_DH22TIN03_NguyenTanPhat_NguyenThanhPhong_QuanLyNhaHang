@@ -39,9 +39,8 @@ namespace QuanLyNhaHang
         private void LoadQuyen()
         {
             cmbQuyen.Items.Clear();
-            cmbQuyen.Items.Add("Admin");
-            cmbQuyen.Items.Add("QuanLy");
-            cmbQuyen.Items.Add("NhanVien");
+            cmbQuyen.Items.Add("Quản lý");
+            cmbQuyen.Items.Add("Nhân viên");
             cmbQuyen.SelectedIndex = -1;
 
             cmbGioiTinh.Items.Clear();
