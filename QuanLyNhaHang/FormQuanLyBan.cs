@@ -8,7 +8,8 @@ namespace QuanLyNhaHang
 {
     public partial class FormQuanLyBan : Form
     {
-        private readonly string connectionString = @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;TrustServerCertificate=True";
+        private readonly string connectionString =
+            @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;TrustServerCertificate=True";
 
         public FormQuanLyBan()
         {
@@ -31,7 +32,7 @@ namespace QuanLyNhaHang
             try
             {
                 using SqlConnection conn = new SqlConnection(connectionString);
-                string query = "SELECT * FROM BanAn";
+                string query = "SELECT IDBanAn, SoBan, TrangThai FROM BanAn ORDER BY SoBan";
                 using SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
@@ -47,7 +48,7 @@ namespace QuanLyNhaHang
                         Tag = row
                     };
 
-                    string trangThai = row["TrangThai"].ToString() ?? string.Empty;
+                    string trangThai = row["TrangThai"]?.ToString() ?? string.Empty;
                     if (trangThai == "Trống")
                         btnBan.BackColor = Color.Aqua;
                     else if (trangThai == "Có người")
@@ -70,98 +71,117 @@ namespace QuanLyNhaHang
 
         private void BtnBan_Click(object? sender, EventArgs e)
         {
-            if (sender is Button clickedButton && clickedButton.Tag is DataRow row)
+            if (sender is not Button clickedButton || clickedButton.Tag is not DataRow row) return;
+
+            int idBanAn = Convert.ToInt32(row["IDBanAn"]);
+            string soBan = row["SoBan"]?.ToString() ?? "";
+            string trangThai = row["TrangThai"]?.ToString() ?? "";
+
+            if (trangThai == "Có người")
             {
-                string soBan = row["SoBan"].ToString() ?? "";
-                string trangThai = row["TrangThai"].ToString() ?? "";
+                int idHoaDon = LayHoaDonChuaThanhToanTheoSoBan(soBan);
 
-                txtMaSoBan.Text = soBan;
-                cmbTrangThai.Text = trangThai;
-
-                if (trangThai == "Có người")
+                if (idHoaDon <= 0)
                 {
-                    int idHoaDon = LayHoaDonChuaThanhToanTheoSoBan(soBan);
+                    MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    if (idHoaDon <= 0)
-                    {
-                        MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
-                        clickedButton.Text = $"Bàn {soBan}\nTrống";
-                        clickedButton.BackColor = Color.Aqua;
-                        row["TrangThai"] = "Trống";
-                        clickedButton.Tag = row;
-                        return;
-                    }
-
-                    FormDSHoaDon frm = new FormDSHoaDon(this);
-                    frm.MdiParent = this.MdiParent;
-                    frm.Show();
-                    frm.BringToFront();
-                    frm.LoadChiTietTheoIDHoaDon(idHoaDon);
+                    CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
+                    clickedButton.Text = $"Bàn {soBan}\nTrống";
+                    clickedButton.BackColor = Color.Aqua;
+                    row["TrangThai"] = "Trống";
+                    clickedButton.Tag = row;
+                    return;
                 }
-                else if (trangThai == "Đã đặt")
+
+                FormDSHoaDon frm = new FormDSHoaDon(this)
                 {
-                    var thongTin = LayThongTinDatBan(soBan);
-                    if (thongTin != null)
-                    {
-                        MessageBox.Show(
-                            $"Tên khách: {thongTin.TenKhach}\n" +
-                            $"SĐT: {thongTin.SoDienThoai}\n" +
-                            $"Thời gian đặt: {thongTin.ThoiGianDat:HH:mm dd/MM/yyyy}",
-                            $"Thông tin đặt bàn {soBan}",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Không tìm thấy thông tin đặt bàn.", "Thông báo");
+                    MdiParent = this.MdiParent
+                };
+                frm.Show();
+                frm.BringToFront();
+                frm.LoadChiTietTheoIDHoaDon(idHoaDon);
+                return;
+            }
 
-                        CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
-                        clickedButton.Text = $"Bàn {soBan}\nTrống";
-                        clickedButton.BackColor = Color.Aqua;
-                        row["TrangThai"] = "Trống";
-                        clickedButton.Tag = row;
-                    }
+            if (trangThai == "Trống")
+            {
+                FormTaoHoaDon f = new FormTaoHoaDon
+                {
+                    MdiParent = this.MdiParent
+                };
+                f.Show();
+                f.BringToFront();
+                f.PresetSoBanTrong(idBanAn);
+                return;
+            }
+
+            if (trangThai == "Đã đặt")
+            {
+                var datTruoc = TimDatBanGanNhatChoBan(idBanAn);
+                if (datTruoc == null)
+                {
+                    MessageBox.Show("Không tìm thấy bản ghi đặt bàn đang hiệu lực cho bàn này.", "Thông báo");
+                    return;
                 }
+
+                FormTaoHoaDon f = new FormTaoHoaDon
+                {
+                    MdiParent = this.MdiParent
+                };
+                f.Show();
+                f.BringToFront();
+                f.PresetBanDatTruoc(datTruoc.Value.idBanAn, datTruoc.Value.idDatBan);
             }
         }
 
-
-        private ThongTinDatBan? LayThongTinDatBan(string soBan)
+        private (int idBanAn, int idDatBan)? TimDatBanGanNhatChoBan(int idBanAn)
         {
-            string query = @"
-        SELECT TOP 1 
-            k.TenKH AS TenKhach, 
-            k.SDT AS SoDienThoai,
-            DATEADD(SECOND, DATEPART(SECOND, d.GioDat),
-                DATEADD(MINUTE, DATEPART(MINUTE, d.GioDat),
-                    DATEADD(HOUR, DATEPART(HOUR, d.GioDat), CAST(d.NgayDat AS DATETIME)))) AS ThoiGianDat
-        FROM DatBan d
-        JOIN BanAn b ON d.IDBanAn = b.IDBanAn
-        JOIN KhachHang k ON d.IDKhachHang = k.IDKhachHang
-        WHERE b.SoBan = @SoBan AND d.TrangThai = N'Đã đặt'
-        ORDER BY d.NgayDat DESC, d.GioDat DESC";
-
-            using SqlConnection conn = new SqlConnection(connectionString);
-            using SqlCommand cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@SoBan", soBan);
-
+            using var conn = new SqlConnection(connectionString);
             conn.Open();
-            using SqlDataReader reader = cmd.ExecuteReader();
-            if (reader.Read())
+
+            string sqlUpcoming = @"
+SELECT TOP 1 d.IDDatBan, d.IDBanAn
+FROM DatBan d
+WHERE d.IDBanAn = @IDBanAn AND d.TrangThai = N'Đã đặt'
+  AND (CAST(d.NgayDat AS datetime) + CAST(d.GioDat AS datetime)) >= GETDATE()
+ORDER BY (CAST(d.NgayDat AS datetime) + CAST(d.GioDat AS datetime)) ASC";
+
+            using (var cmd = new SqlCommand(sqlUpcoming, conn))
             {
-                return new ThongTinDatBan
+                cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
+                var rd = cmd.ExecuteReader();
+                if (rd.Read())
                 {
-                    TenKhach = reader["TenKhach"].ToString() ?? "",
-                    SoDienThoai = reader["SoDienThoai"].ToString() ?? "",
-                    ThoiGianDat = Convert.ToDateTime(reader["ThoiGianDat"])
-                };
+                    int idDat = rd.GetInt32(0);
+                    int idB = rd.GetInt32(1);
+                    rd.Close();
+                    return (idB, idDat);
+                }
+                rd.Close();
+            }
+
+            string sqlLatest = @"
+SELECT TOP 1 d.IDDatBan, d.IDBanAn
+FROM DatBan d
+WHERE d.IDBanAn = @IDBanAn AND d.TrangThai = N'Đã đặt'
+ORDER BY (CAST(d.NgayDat AS datetime) + CAST(d.GioDat AS datetime)) DESC";
+
+            using (var cmd2 = new SqlCommand(sqlLatest, conn))
+            {
+                cmd2.Parameters.AddWithValue("@IDBanAn", idBanAn);
+                var rd2 = cmd2.ExecuteReader();
+                if (rd2.Read())
+                {
+                    int idDat = rd2.GetInt32(0);
+                    int idB = rd2.GetInt32(1);
+                    rd2.Close();
+                    return (idB, idDat);
+                }
+                rd2.Close();
             }
 
             return null;
         }
-
 
         private int LayHoaDonChuaThanhToanTheoSoBan(string soBan)
         {

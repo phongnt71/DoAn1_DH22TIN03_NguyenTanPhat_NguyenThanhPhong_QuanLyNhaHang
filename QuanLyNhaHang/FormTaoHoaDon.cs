@@ -16,14 +16,12 @@ namespace QuanLyNhaHang
         private bool isAdding = false;
         private bool isEditing = false;
 
-        // Chặn vòng lặp sự kiện khi bật/tắt control
         private bool _updatingUI = false;
 
         public FormTaoHoaDon()
         {
             InitializeComponent();
 
-            // Sự kiện
             this.Load += FormTaoHoaDon_Load;
             btnThem.Click += btnThem_Click;
             btnXoa.Click += btnXoa_Click;
@@ -33,12 +31,10 @@ namespace QuanLyNhaHang
             btnLamMoi.Click += btnLamMoi_Click;
             btnCapNhat.Click += btnCapNhat_Click;
 
-            // Ràng buộc 3 lựa chọn
             chkMangVe.CheckedChanged += chkMangVe_CheckedChanged;
             cmbBanDatTruoc.SelectedIndexChanged += cmbBanDatTruoc_SelectedIndexChanged;
             cmbSoBan.SelectedIndexChanged += cmbSoBan_SelectedIndexChanged;
 
-            // Gợi ý cho thời gian dự kiến (nếu control đã kéo vào form)
             if (nudThoiGianDuKien != null)
             {
                 nudThoiGianDuKien.Minimum = 15;
@@ -48,7 +44,6 @@ namespace QuanLyNhaHang
             }
         }
 
-        // ================== BẬT/TẮT CÁC LỰA CHỌN & THỜI GIAN DỰ KIẾN ==================
         private void ApplySelectionMode()
         {
             if (_updatingUI) return;
@@ -82,7 +77,7 @@ namespace QuanLyNhaHang
 
                 if (nudThoiGianDuKien != null)
                 {
-                    nudThoiGianDuKien.Enabled = false; // theo bàn đặt trước, không dùng thời lượng tự chọn
+                    nudThoiGianDuKien.Enabled = false;
                 }
             }
             else if (hasSoBan)
@@ -95,7 +90,7 @@ namespace QuanLyNhaHang
 
                 if (nudThoiGianDuKien != null)
                 {
-                    nudThoiGianDuKien.Enabled = true;  // chỉ dùng khi chọn Số bàn trống
+                    nudThoiGianDuKien.Enabled = true;
                     if (nudThoiGianDuKien.Value < 15) nudThoiGianDuKien.Value = 60;
                 }
             }
@@ -118,7 +113,6 @@ namespace QuanLyNhaHang
         private void chkMangVe_CheckedChanged(object sender, EventArgs e) => ApplySelectionMode();
         private void cmbSoBan_SelectedIndexChanged(object sender, EventArgs e) => ApplySelectionMode();
 
-        // ================== NGUYÊN LIỆU SAU LƯU ==================
         private void CapNhatNguyenLieuSauKhiTaoHoaDon(int idHoaDon)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -162,7 +156,6 @@ namespace QuanLyNhaHang
             }
         }
 
-        // ================== KIỂM TRA NGUYÊN LIỆU ==================
         private bool KiemTraNguyenLieuDu(int idMonAn, int soLuongMon)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -206,7 +199,6 @@ namespace QuanLyNhaHang
             return true;
         }
 
-        // ================== LOAD DỮ LIỆU BÀN ==================
         private void LoadSoBan()
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -248,7 +240,6 @@ namespace QuanLyNhaHang
             }
         }
 
-        // Bàn đặt trước: CHỈ hiện các slot ĐÃ ĐẶT nhưng bàn CHƯA “Có người”
         private void LoadBanDatTruoc(int? keepSelectedIdBanAn = null)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -261,6 +252,7 @@ SELECT
     b.SoBan,
     d.NgayDat,
     d.GioDat,
+    d.ThoiLuongPhut,
     k.TenKH
 FROM DatBan d
 JOIN BanAn b ON b.IDBanAn = d.IDBanAn
@@ -281,12 +273,13 @@ ORDER BY d.NgayDat ASC, d.GioDat ASC, b.SoBan ASC";
                     int soBan = Convert.ToInt32(r["SoBan"]);
                     DateTime ngay = Convert.ToDateTime(r["NgayDat"]);
                     TimeSpan gio = (TimeSpan)r["GioDat"];
-                    r["Display"] = $"Bàn {soBan} - {ngay:dd/MM/yyyy} {gio.Hours:00}:{gio.Minutes:00}";
+                    int tl = r["ThoiLuongPhut"] == DBNull.Value ? 60 : Convert.ToInt32(r["ThoiLuongPhut"]);
+                    r["Display"] = $"Bàn {soBan} - {ngay:dd/MM/yyyy} {gio.Hours:00}:{gio.Minutes:00} ({tl} phút)";
                 }
 
                 cmbBanDatTruoc.DataSource = dt;
                 cmbBanDatTruoc.DisplayMember = "Display";
-                cmbBanDatTruoc.ValueMember = "IDBanAn"; // dùng IDBanAn làm Value
+                cmbBanDatTruoc.ValueMember = "IDBanAn";
                 cmbBanDatTruoc.SelectedIndex = -1;
 
                 if (keepSelectedIdBanAn.HasValue)
@@ -294,7 +287,6 @@ ORDER BY d.NgayDat ASC, d.GioDat ASC, b.SoBan ASC";
             }
         }
 
-        // ================== FORM LOAD ==================
         private void FormTaoHoaDon_Load(object sender, EventArgs e)
         {
             InitDataTable();
@@ -307,7 +299,6 @@ ORDER BY d.NgayDat ASC, d.GioDat ASC, b.SoBan ASC";
             txtMaHoaDon.Text = GenerateInvoiceCode();
             LoadHoaDonDaTao();
 
-            // Clear sạch khi vào form
             ResetForm();
 
             ApplySelectionMode();
@@ -329,8 +320,12 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
                 da.Fill(dt);
 
                 dtgvHoaDonDaTao.DataSource = dt;
+
                 dtgvHoaDonDaTao.CellClick -= dtgvHoaDonDaTao_CellClick;
                 dtgvHoaDonDaTao.CellClick += dtgvHoaDonDaTao_CellClick;
+
+                dtgvHoaDonDaTao.ClearSelection();
+                dtgvHoaDonDaTao.CurrentCell = null;
             }
         }
 
@@ -351,7 +346,7 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             {
                 conn.Open();
 
-                string queryHD = @"SELECT IDHoaDon, IDNhanVien, IDKhachHang, NgayLap, TongTien, SoBan, GhiChu
+                string queryHD = @"SELECT IDHoaDon, IDNhanVien, IDKhachHang, NgayLap, TongTien, SoBan, GhiChu, ThoiLuongPhut
                                    FROM HoaDon WHERE MaHoaDon = @MaHoaDon";
                 using (var cmd = new SqlCommand(queryHD, conn))
                 {
@@ -381,6 +376,18 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
                                 LoadBanDatTruoc(null);
                                 cmbSoBan.SelectedIndex = -1;
                                 chkMangVe.Checked = true;
+                            }
+
+                            int thoiLuongPhut = 60;
+                            if (reader["ThoiLuongPhut"] != DBNull.Value)
+                                thoiLuongPhut = Convert.ToInt32(reader["ThoiLuongPhut"]);
+
+                            if (nudThoiGianDuKien != null)
+                            {
+                                nudThoiGianDuKien.Minimum = 15;
+                                nudThoiGianDuKien.Maximum = 600;
+                                nudThoiGianDuKien.Increment = 15;
+                                nudThoiGianDuKien.Value = thoiLuongPhut;
                             }
 
                             int idKH = (int)reader["IDKhachHang"];
@@ -428,7 +435,6 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             dtgvChiTietHD.DataSource = dtChiTietHD;
         }
 
-        // Khi chọn slot “Bàn đặt trước”: set số bàn tương ứng + tên KH (nếu có)
         private void cmbBanDatTruoc_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbBanDatTruoc.SelectedIndex >= 0 && cmbBanDatTruoc.SelectedItem is DataRowView drv)
@@ -495,7 +501,6 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             txtTongTien.Text = tongTien.ToString("N0");
         }
 
-        // ================== CHI TIẾT MÓN ==================
         private void btnThem_Click(object sender, EventArgs e)
         {
             if (cmbMonAn.SelectedValue == null)
@@ -567,7 +572,6 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             }
         }
 
-        // ================== LƯU/CẬP NHẬT HÓA ĐƠN ==================
         private int? GetKhachHangIdByName(string tenKhachHang)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -624,6 +628,61 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             ApplySelectionMode();
         }
 
+        // ====== Helpers cho đặt trước & vào sớm ======
+
+        private int GetThoiLuongDatBan(int idDatBan)
+        {
+            using var conn = new SqlConnection(connectionString);
+            conn.Open();
+            using var cmd = new SqlCommand("SELECT ISNULL(ThoiLuongPhut,60) FROM DatBan WHERE IDDatBan=@id", conn);
+            cmd.Parameters.AddWithValue("@id", idDatBan);
+            object rs = cmd.ExecuteScalar();
+            return rs == null ? 60 : Convert.ToInt32(rs);
+        }
+
+        private bool IsDurationOkayForCreate(int idBanAn, DateTime start, int minutes, int? ignoreIdDatBan)
+        {
+            using var conn = new SqlConnection(connectionString);
+            conn.Open();
+
+            string sqlDatBan = @"
+DECLARE @Start datetime=@s, @End datetime=DATEADD(MINUTE,@m,@s);
+SELECT COUNT(*)
+FROM DatBan d
+WHERE d.IDBanAn=@id
+  AND d.TrangThai IN (N'Đã đặt', N'Giữ chỗ')
+  AND (@ignore IS NULL OR d.IDDatBan<>@ignore)
+  AND @Start < DATEADD(MINUTE, ISNULL(d.ThoiLuongPhut,60),
+                       CAST(d.NgayDat AS datetime)+CAST(d.GioDat AS datetime))
+  AND (CAST(d.NgayDat AS datetime)+CAST(d.GioDat AS datetime)) < @End";
+
+            using var c1 = new SqlCommand(sqlDatBan, conn);
+            c1.Parameters.AddWithValue("@s", start);
+            c1.Parameters.AddWithValue("@m", minutes);
+            c1.Parameters.AddWithValue("@id", idBanAn);
+            c1.Parameters.AddWithValue("@ignore", (object?)ignoreIdDatBan ?? DBNull.Value);
+            int cnt1 = Convert.ToInt32(c1.ExecuteScalar());
+
+            string sqlHD = @"
+DECLARE @Start2 datetime=@s, @End2 datetime=DATEADD(MINUTE,@m,@s);
+SELECT COUNT(*)
+FROM HoaDon h
+WHERE h.TrangThai IN (N'Chưa thanh toán', N'Nợ')
+  AND @Start2 < DATEADD(MINUTE, ISNULL(h.ThoiLuongPhut,60), h.NgayLap)
+  AND h.NgayLap < @End2
+  AND (
+        h.SoBan = @id
+        OR h.SoBan = (SELECT SoBan FROM BanAn WHERE IDBanAn=@id)
+      )";
+            using var c2 = new SqlCommand(sqlHD, conn);
+            c2.Parameters.AddWithValue("@s", start);
+            c2.Parameters.AddWithValue("@m", minutes);
+            c2.Parameters.AddWithValue("@id", idBanAn);
+            int cnt2 = Convert.ToInt32(c2.ExecuteScalar());
+
+            return (cnt1 + cnt2) == 0;
+        }
+
         private void btnCapNhat_Click(object sender, EventArgs e)
         {
             if (currentIdHoaDon <= 0)
@@ -659,11 +718,32 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
                         }
                     }
 
+                    int? idBanAn = null;
+                    if (cmbSoBan.SelectedValue != null) idBanAn = (int)cmbSoBan.SelectedValue;
+
+                    int thoiLuongMoi = (nudThoiGianDuKien != null) ? (int)nudThoiGianDuKien.Value : 60;
+                    if (thoiLuongMoi < 15) thoiLuongMoi = 15;
+
+                    if (idBanAn.HasValue)
+                    {
+                        DateTime start = dtpNgayLap.Value;
+                        if (!IsDurationOkayForCreate(idBanAn.Value, start, thoiLuongMoi, null))
+                        {
+                            MessageBox.Show("Thời lượng mới bị trùng với lịch đặt/hoá đơn khác của bàn này. Vui lòng giảm thời lượng hoặc đổi bàn.",
+                                "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            transaction.Rollback();
+                            return;
+                        }
+                    }
+
                     using (var updateCmd = new SqlCommand(
-                        "UPDATE HoaDon SET TongTien=@TongTien, GhiChu=@GhiChu WHERE IDHoaDon=@ID", conn, transaction))
+                        @"UPDATE HoaDon 
+                          SET TongTien=@TongTien, GhiChu=@GhiChu, ThoiLuongPhut=@ThoiLuongPhut
+                          WHERE IDHoaDon=@ID", conn, transaction))
                     {
                         updateCmd.Parameters.AddWithValue("@TongTien", decimal.Parse(txtTongTien.Text));
                         updateCmd.Parameters.AddWithValue("@GhiChu", txtGhiChu.Text.Trim());
+                        updateCmd.Parameters.AddWithValue("@ThoiLuongPhut", thoiLuongMoi);
                         updateCmd.Parameters.AddWithValue("@ID", currentIdHoaDon);
                         updateCmd.ExecuteNonQuery();
                     }
@@ -680,39 +760,11 @@ WHERE h.TrangThai = N'Nợ' OR h.TrangThai = N'Chưa thanh toán'";
             }
         }
 
-        // KIỂM TRA thời lượng vãng lai có đụng lịch đặt trước không
-        // Overlap nếu [Start, End] giao với [ResStart, ResEnd] (chạm mép cũng KHÔNG CHO)
-        private bool IsWalkInDurationOkay(int idBanAn, DateTime start, int minutes)
-        {
-            using (var conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-
-                var cmd = new SqlCommand(@"
-DECLARE @StartDT datetime = @Start;
-DECLARE @EndDT   datetime = DATEADD(MINUTE, @Minutes, @StartDT);
-
-SELECT COUNT(*)
-FROM DatBan d
-WHERE d.IDBanAn = @IDBanAn
-  AND (d.TrangThai IS NULL OR d.TrangThai IN (N'Đã đặt', N'Giữ chỗ'))
-  AND @EndDT   >= (CONVERT(datetime, d.NgayDat) + CAST(d.GioDat AS datetime))
-  AND @StartDT <= DATEADD(MINUTE, ISNULL(d.ThoiLuongPhut, 60), (CONVERT(datetime, d.NgayDat) + CAST(d.GioDat AS datetime)))
-", conn);
-
-                cmd.Parameters.AddWithValue("@IDBanAn", idBanAn);
-                cmd.Parameters.AddWithValue("@Start", start);
-                cmd.Parameters.AddWithValue("@Minutes", minutes);
-
-                int count = Convert.ToInt32(cmd.ExecuteScalar());
-                return count == 0; // không trùng -> OK
-            }
-        }
-
         private bool isCustomerAdded = false;
 
         private void btnLuu_Click(object sender, EventArgs e)
         {
+            // Phải chọn bàn hoặc tích Mang về
             if ((cmbSoBan.SelectedIndex == -1 && cmbBanDatTruoc.SelectedIndex == -1) && !chkMangVe.Checked)
             {
                 MessageBox.Show("Vui lòng chọn bàn hoặc tích 'Mang về' trước khi lưu hóa đơn.", "Thông báo",
@@ -760,7 +812,6 @@ WHERE d.IDBanAn = @IDBanAn
                 {
                     string maHoaDon = txtMaHoaDon.Text;
 
-                    // LẤY ID BÀN + IDĐẶT BÀN (nếu chọn từ combobox đặt trước)
                     int? idBan = null;
                     int? idDatBan = null;
                     if (!chkMangVe.Checked)
@@ -768,7 +819,7 @@ WHERE d.IDBanAn = @IDBanAn
                         if (cmbBanDatTruoc.SelectedIndex >= 0 && cmbBanDatTruoc.SelectedItem is DataRowView drv)
                         {
                             idBan = Convert.ToInt32(drv["IDBanAn"]);
-                            idDatBan = Convert.ToInt32(drv["IDDatBan"]); // để cập nhật 'Đã nhận bàn'
+                            idDatBan = Convert.ToInt32(drv["IDDatBan"]);
                         }
                         else if (cmbSoBan.SelectedValue != null)
                         {
@@ -776,25 +827,47 @@ WHERE d.IDBanAn = @IDBanAn
                         }
                     }
 
-                    // *** KIỂM TRA THỜI GIAN DỰ KIẾN khi chọn Số bàn trống (không mang về, không theo lịch đặt trước)
-                    if (!chkMangVe.Checked && idBan.HasValue && !idDatBan.HasValue)
+                    // TÍNH THỜI LƯỢNG & KIỂM TRA CHỒNG GIỜ TỪ THỜI ĐIỂM TẠO HÓA ĐƠN (VÀO SỚM)
+                    int thoiLuongPhutToSave;
+                    if (chkMangVe.Checked)
                     {
-                        int minutes = (nudThoiGianDuKien != null) ? (int)nudThoiGianDuKien.Value : 60;
-                        DateTime start = dtpNgayLap.Value; // giờ vào
-                        if (!IsWalkInDurationOkay(idBan.Value, start, minutes))
+                        thoiLuongPhutToSave = 0; // cột không cho null -> dùng 0 cho mang về
+                    }
+                    else if (idBan.HasValue && idDatBan.HasValue)
+                    {
+                        thoiLuongPhutToSave = GetThoiLuongDatBan(idDatBan.Value);
+                        if (thoiLuongPhutToSave < 15) thoiLuongPhutToSave = 60;
+
+                        DateTime startNow = dtpNgayLap.Value; // bắt đầu từ thời điểm lập hóa đơn
+                        if (!IsDurationOkayForCreate(idBan.Value, startNow, thoiLuongPhutToSave, idDatBan))
                         {
-                            MessageBox.Show(
-                                "Thời lượng dự kiến bạn chọn sẽ trùng với một lịch đặt bàn sắp tới của bàn này.\n" +
-                                "Vui lòng rút ngắn thời lượng hoặc chọn bàn khác.",
+                            MessageBox.Show("Khoảng thời gian từ hiện tại đến khi kết thúc (theo thời lượng đặt) đang bị trùng.\nVui lòng chọn bàn khác hoặc chờ đến khi bàn trống.",
                                 "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            transaction.Rollback();
                             return;
                         }
                     }
+                    else // walk-in
+                    {
+                        thoiLuongPhutToSave = (nudThoiGianDuKien != null) ? (int)nudThoiGianDuKien.Value : 60;
+                        if (thoiLuongPhutToSave < 15) thoiLuongPhutToSave = 15;
 
-                    // INSERT HÓA ĐƠN
+                        if (idBan.HasValue)
+                        {
+                            DateTime startNow = dtpNgayLap.Value;
+                            if (!IsDurationOkayForCreate(idBan.Value, startNow, thoiLuongPhutToSave, null))
+                            {
+                                MessageBox.Show("Thời lượng dự kiến trùng với lịch đặt/hóa đơn khác của bàn này.",
+                                    "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                transaction.Rollback();
+                                return;
+                            }
+                        }
+                    }
+
                     string insertHD = @"
-INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan, GhiChu)
-VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan, @GhiChu);
+INSERT INTO HoaDon (IDNhanVien, IDKhachHang, NgayLap, TongTien, TrangThai, MaHoaDon, SoBan, GhiChu, ThoiLuongPhut)
+VALUES (@IDNhanVien, @IDKhachHang, @NgayLap, @TongTien, @TrangThai, @MaHoaDon, @SoBan, @GhiChu, @ThoiLuongPhut);
 SELECT SCOPE_IDENTITY();";
 
                     int newIDHoaDon;
@@ -808,10 +881,10 @@ SELECT SCOPE_IDENTITY();";
                         cmdHD.Parameters.AddWithValue("@MaHoaDon", maHoaDon);
                         cmdHD.Parameters.AddWithValue("@SoBan", (object)idBan ?? DBNull.Value);
                         cmdHD.Parameters.AddWithValue("@GhiChu", txtGhiChu.Text.Trim());
+                        cmdHD.Parameters.AddWithValue("@ThoiLuongPhut", thoiLuongPhutToSave);
                         newIDHoaDon = Convert.ToInt32(cmdHD.ExecuteScalar());
                     }
 
-                    // INSERT CHI TIẾT
                     foreach (DataRow row in dtChiTietHD.Rows)
                     {
                         string insertCTHD = @"
@@ -827,7 +900,6 @@ VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
                         }
                     }
 
-                    // CẬP NHẬT TRẠNG THÁI BÀN
                     if (!chkMangVe.Checked && idBan.HasValue)
                     {
                         using (var cmdUpdateBan =
@@ -838,7 +910,6 @@ VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
                         }
                     }
 
-                    // Nếu lấy từ đặt trước -> đổi DatBan thành 'Đã nhận bàn'
                     if (idDatBan.HasValue)
                     {
                         using (var cmdUpdateDat =
@@ -851,17 +922,14 @@ VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
 
                     transaction.Commit();
 
-                    // Trừ nguyên liệu
                     CapNhatNguyenLieuSauKhiTaoHoaDon(newIDHoaDon);
 
-                    // Reload nguồn combobox (slot đã nhận bàn sẽ biến mất vì không còn trạng thái 'Đã đặt')
                     LoadHoaDonDaTao();
                     LoadSoBan();
                     LoadBanDatTruoc(null);
 
                     MessageBox.Show("Lưu hóa đơn thành công!");
 
-                    // Reset form sau lưu
                     ResetForm();
                 }
                 catch (Exception ex)
@@ -879,6 +947,78 @@ VALUES (@IDHoaDon, @IDMonAn, @SoLuong, @DonGia)";
             txtKhachHang.Text = "";
             txtMaHoaDon.Text = GenerateInvoiceCode();
             ApplySelectionMode();
+        }
+
+        public void PresetSoBanTrong(int idBanAn)
+        {
+            LoadSoBan(idBanAn);
+            LoadBanDatTruoc(null);
+
+            cmbSoBan.SelectedValue = idBanAn;
+            cmbSoBan.Enabled = false;
+
+            cmbBanDatTruoc.SelectedIndex = -1;
+            cmbBanDatTruoc.Enabled = false;
+
+            chkMangVe.Checked = false;
+            chkMangVe.Enabled = false;
+
+            if (nudThoiGianDuKien != null)
+            {
+                nudThoiGianDuKien.Enabled = true;
+                if (nudThoiGianDuKien.Value < 15) nudThoiGianDuKien.Value = 60;
+            }
+
+            ApplySelectionMode();
+        }
+
+        public void PresetBanDatTruoc(int idBanAn, int idDatBan)
+        {
+            LoadSoBan(idBanAn);
+            LoadBanDatTruoc(null);
+
+            SelectBanDatTruocById(idDatBan);
+
+            cmbBanDatTruoc.Enabled = false;
+            cmbSoBan.SelectedIndex = -1;
+            cmbSoBan.Enabled = false;
+
+            chkMangVe.Checked = false;
+            chkMangVe.Enabled = false;
+
+            if (nudThoiGianDuKien != null)
+            {
+                nudThoiGianDuKien.Enabled = false;
+            }
+
+            ApplySelectionMode();
+        }
+
+        private void SelectBanDatTruocById(int idDatBan)
+        {
+            if (cmbBanDatTruoc.DataSource is DataTable dt)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (Convert.ToInt32(dt.Rows[i]["IDDatBan"]) == idDatBan)
+                    {
+                        cmbBanDatTruoc.SelectedIndex = i;
+                        return;
+                    }
+                }
+            }
+            else if (cmbBanDatTruoc.Items.Count > 0)
+            {
+                for (int i = 0; i < cmbBanDatTruoc.Items.Count; i++)
+                {
+                    if (cmbBanDatTruoc.Items[i] is DataRowView drv &&
+                        Convert.ToInt32(drv["IDDatBan"]) == idDatBan)
+                    {
+                        cmbBanDatTruoc.SelectedIndex = i;
+                        return;
+                    }
+                }
+            }
         }
     }
 }

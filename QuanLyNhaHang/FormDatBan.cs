@@ -15,10 +15,7 @@ namespace QuanLyNhaHang
             @"Data Source=DESKTOP-2024ZNN\SQLEXPRESS;Initial Catalog=QuanLyNhaHang;Integrated Security=True;TrustServerCertificate=True";
 
         private WinFormsTimer timer; // kiểm tra định kỳ
-
-        // ====== cờ chặn vòng lặp sự kiện khi snap ======
-        private bool _snappingNud = false;
-        private bool _snappingTime = false;
+        private bool _snappingNud = false; // chặn vòng lặp sự kiện cho NumericUpDown
 
         public FormDatBan()
         {
@@ -27,20 +24,16 @@ namespace QuanLyNhaHang
             this.Load += FormDatBan_Load;
             dtgvDatBan.CellClick += DtgvDatBan_CellClick;
 
-            // Hiển thị 24h; UI không hiển thị giây
+            // Hiển thị 24h; UI không hiển thị giây. Cho phép gõ TỪNG PHÚT (không snap 15')
             dtpGioDat.Format = DateTimePickerFormat.Custom;
             dtpGioDat.CustomFormat = "HH:mm";
             dtpGioDat.ShowUpDown = true;
 
-            // ====== cấu hình bước 15 phút cho thời lượng ======
-            // (nếu đã set trong Designer thì giữ nguyên; đoạn này đảm bảo có giá trị fallback)
+            // Bước 15 phút cho thời lượng
             nudThoiLuong.Minimum = 15;
-            nudThoiLuong.Maximum = 600;    // 10 tiếng, tùy chỉnh
+            nudThoiLuong.Maximum = 600;
             nudThoiLuong.Increment = 15;
             nudThoiLuong.ValueChanged += NudThoiLuong_ValueChanged;
-
-            // Snap giờ đặt về bội số 15
-            dtpGioDat.ValueChanged += DtpGioDat_ValueChanged;
 
             // Timer 60s
             timer = new WinFormsTimer();
@@ -51,16 +44,12 @@ namespace QuanLyNhaHang
         private void FormDatBan_Load(object sender, EventArgs e)
         {
             CheckAndUpdateBanStatus();
-            LoadTatCaBan();      // ⬅️ không lọc trạng thái
+            LoadTatCaBan();      // không lọc trạng thái
             LoadDatBan();
             timer.Start();
 
-            // Giá trị mặc định cho thời lượng
             if (nudThoiLuong.Minimum <= 60 && nudThoiLuong.Maximum >= 60)
                 nudThoiLuong.Value = 60;
-
-            // Snap ngay lần đầu hiển thị
-            SnapTimePickerTo15();
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -70,9 +59,7 @@ namespace QuanLyNhaHang
             LoadDatBan();
         }
 
-        /// <summary>
-        /// Snap NumericUpDown về bội số 15 (0, 15, 30, 45, 60, ...)
-        /// </summary>
+        // Snap NumericUpDown về bội số 15 (0, 15, 30, 45, 60, ...)
         private void NudThoiLuong_ValueChanged(object sender, EventArgs e)
         {
             if (_snappingNud) return;
@@ -89,38 +76,7 @@ namespace QuanLyNhaHang
             _snappingNud = false;
         }
 
-        /// <summary>
-        /// Snap DateTimePicker (giờ đặt) về bội số 15 phút
-        /// </summary>
-        private void DtpGioDat_ValueChanged(object sender, EventArgs e)
-        {
-            SnapTimePickerTo15();
-        }
-
-        private void SnapTimePickerTo15()
-        {
-            if (_snappingTime) return;
-            _snappingTime = true;
-
-            DateTime v = dtpGioDat.Value;
-            int step = 15;
-            int snappedMinute = (int)Math.Round(v.Minute / (double)step) * step;
-            if (snappedMinute == 60)
-            {
-                v = v.AddHours(1);
-                snappedMinute = 0;
-            }
-            DateTime snapped = new DateTime(v.Year, v.Month, v.Day, v.Hour, snappedMinute, 0);
-
-            if (snapped != dtpGioDat.Value)
-                dtpGioDat.Value = snapped;
-
-            _snappingTime = false;
-        }
-
-        /// <summary>
-        /// Đến đúng giờ đặt (tính theo phút) và bàn đang 'Trống' => set 'Đã đặt'
-        /// </summary>
+        // Đến đúng giờ đặt (tính theo phút) và bàn đang 'Trống' => set 'Đã đặt'
         private void CheckAndUpdateBanStatus()
         {
             using (var conn = new SqlConnection(connectionString))
@@ -156,9 +112,7 @@ GROUP BY d.IDBanAn";
             }
         }
 
-        /// <summary>
-        /// HIỂN THỊ TẤT CẢ BÀN (không lọc). DisplayMember = 'SoBan - TrangThai'
-        /// </summary>
+        // HIỂN THỊ TẤT CẢ BÀN (không lọc). DisplayMember = 'SoBan - TrangThai'
         private void LoadTatCaBan()
         {
             using (var conn = new SqlConnection(connectionString))
@@ -191,14 +145,15 @@ ORDER BY SoBan";
                 var query = @"
 SELECT 
     d.IDDatBan,
+    b.IDBanAn,                         -- thêm để set SelectedValue combobox khi chọn dòng
     b.SoBan,
     k.TenKH,
     d.NgayDat,
     d.GioDat,
     d.ThoiLuongPhut,
     DATEADD(MINUTE, ISNULL(d.ThoiLuongPhut,60), CAST(d.NgayDat AS datetime)+CAST(d.GioDat AS datetime)) AS GioKetThuc,
-    d.TrangThai AS TrangThaiDat,   -- trạng thái của bản ghi đặt bàn (Đã đặt / Giữ chỗ / Đã nhận bàn)
-    b.TrangThai AS TrangThaiBan    -- trạng thái hiện tại của bàn (Trống / Đã đặt / Có người)
+    d.TrangThai AS TrangThaiDat,   
+    b.TrangThai AS TrangThaiBan    
 FROM DatBan d
 JOIN BanAn b ON d.IDBanAn = b.IDBanAn
 JOIN KhachHang k ON d.IDKhachHang = k.IDKhachHang
@@ -210,11 +165,11 @@ ORDER BY d.NgayDat DESC, d.GioDat DESC";
 
                 dtgvDatBan.DataSource = dt;
 
-                // Ẩn ID
                 if (dtgvDatBan.Columns.Contains("IDDatBan"))
                     dtgvDatBan.Columns["IDDatBan"].Visible = false;
+                if (dtgvDatBan.Columns.Contains("IDBanAn"))
+                    dtgvDatBan.Columns["IDBanAn"].Visible = false;
 
-                // Đặt tiêu đề cột
                 if (dtgvDatBan.Columns.Contains("SoBan"))
                     dtgvDatBan.Columns["SoBan"].HeaderText = "Số bàn";
                 if (dtgvDatBan.Columns.Contains("TenKH"))
@@ -234,22 +189,8 @@ ORDER BY d.NgayDat DESC, d.GioDat DESC";
             }
         }
 
-        // ---------- TIỆN ÍCH & KIỂM TRA CHỒNG GIỜ ----------
-
-        private int GetSoBanById(int idBanAn)
-        {
-            using var conn = new SqlConnection(connectionString);
-            conn.Open();
-            using var cmd = new SqlCommand("SELECT SoBan FROM BanAn WHERE IDBanAn=@id", conn);
-            cmd.Parameters.AddWithValue("@id", idBanAn);
-            var rs = cmd.ExecuteScalar();
-            return rs != null ? Convert.ToInt32(rs) : -1;
-        }
-
-        /// <summary>
-        /// Kiểm tra chồng giờ theo khoảng: (StartA < EndB) && (StartB < EndA)
-        /// So với cả các bản ghi Đặt bàn khác (Đã đặt/Giữ chỗ) và các Hóa đơn đang mở (Chưa thanh toán/Nợ).
-        /// </summary>
+        // Kiểm tra chồng giờ theo khoảng: (StartA < EndB) && (StartB < EndA)
+        // So với cả các Đặt bàn khác (Đã đặt/Giữ chỗ) và các Hóa đơn đang mở (Chưa thanh toán/Nợ).
         private bool HasOverlap(int idBanAn, DateTime ngayDat, TimeSpan gioDat, int thoiLuongPhut, int? ignoreIdDatBan = null)
         {
             DateTime start = ngayDat.Date.Add(gioDat);
@@ -258,7 +199,7 @@ ORDER BY d.NgayDat DESC, d.GioDat DESC";
             using var conn = new SqlConnection(connectionString);
             conn.Open();
 
-            // 1) Đụng các slot ĐẶT BÀN khác
+            // 1) Đặt bàn
             string sqlDatBan = @"
 SELECT COUNT(*)
 FROM DatBan d
@@ -277,20 +218,24 @@ WHERE d.IDBanAn = @IDBanAn
             cmd1.Parameters.AddWithValue("@End", end);
             int c1 = Convert.ToInt32(cmd1.ExecuteScalar());
 
-            // 2) Đụng các HÓA ĐƠN đang mở/nợ (đang chiếm bàn)
-            int soBan = GetSoBanById(idBanAn);
+            // 2) Hóa đơn đang chiếm bàn
+            // LƯU Ý: HoaDon.SoBan trong DB có thể đang lưu IDBanAn (đúng) hoặc số bàn (dữ liệu cũ).
+            // So sánh với cả hai để an toàn.
             string sqlHoaDon = @"
 SELECT COUNT(*)
 FROM HoaDon h
-WHERE h.SoBan = @SoBan
-  AND h.TrangThai IN (N'Chưa thanh toán', N'Nợ')
+WHERE h.TrangThai IN (N'Chưa thanh toán', N'Nợ')
   AND (
         @Start < DATEADD(MINUTE, ISNULL(h.ThoiLuongPhut,60), h.NgayLap)
     AND h.NgayLap < @End
+  )
+  AND (
+        h.SoBan = @IDBanAn
+        OR h.SoBan = (SELECT SoBan FROM BanAn WHERE IDBanAn = @IDBanAn)
   )";
 
             using var cmd2 = new SqlCommand(sqlHoaDon, conn);
-            cmd2.Parameters.AddWithValue("@SoBan", soBan);
+            cmd2.Parameters.AddWithValue("@IDBanAn", idBanAn);
             cmd2.Parameters.AddWithValue("@Start", start);
             cmd2.Parameters.AddWithValue("@End", end);
             int c2 = Convert.ToInt32(cmd2.ExecuteScalar());
@@ -323,7 +268,6 @@ WHERE h.SoBan = @SoBan
             cmbBanAn.SelectedIndex = -1;
             dtpNgayDat.Value = DateTime.Now;
             dtpGioDat.Value = DateTime.Now;
-            SnapTimePickerTo15();
 
             if (nudThoiLuong.Minimum <= 60 && nudThoiLuong.Maximum >= 60)
                 nudThoiLuong.Value = 60;
@@ -362,10 +306,9 @@ WHERE h.SoBan = @SoBan
                 return;
             }
 
-            // Kiểm tra chồng giờ theo khoảng
             if (HasOverlap(idBanAn, ngayDat, gioDat, thoiLuong))
             {
-                MessageBox.Show("Khoảng thời gian này đã có người đặt hoặc bàn đang được sử dụng vui lòng chọn khoảng thời gian khác hoặc bàn khác.", "Cảnh báo",
+                MessageBox.Show("Khoảng thời gian này đã có người đặt hoặc bàn đang được sử dụng. Vui lòng chọn thời gian/bàn khác.", "Cảnh báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -463,7 +406,6 @@ VALUES (@IDBanAn, @IDKhachHang, @NgayDat, @GioDat, @ThoiLuongPhut, N'Đã đặt
                 return;
             }
 
-            // Chặn chồng giờ (bỏ qua chính record đang sửa)
             if (HasOverlap(newIdBanAn, ngayDat, gioDat, thoiLuong, idDatBan))
             {
                 MessageBox.Show("Khoảng thời gian này đã bị chiếm.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -535,8 +477,24 @@ WHERE IDDatBan = @IDDatBan";
             var row = dtgvDatBan.Rows[e.RowIndex];
 
             txtTenKhachHang.Text = row.Cells["TenKH"]?.Value?.ToString() ?? string.Empty;
-            // Chỉ set text hiển thị; Value sẽ chọn lại khi người dùng chọn từ combobox
-            cmbBanAn.Text = row.Cells["SoBan"]?.Value?.ToString() ?? string.Empty;
+
+            // Ưu tiên set SelectedValue theo IDBanAn để combobox dùng đúng ValueMember
+            if (row.Cells["IDBanAn"]?.Value != null && row.Cells["IDBanAn"].Value != DBNull.Value)
+            {
+                try
+                {
+                    cmbBanAn.SelectedValue = Convert.ToInt32(row.Cells["IDBanAn"].Value);
+                }
+                catch
+                {
+                    // fallback bằng cách cố gán text hiển thị
+                    cmbBanAn.Text = row.Cells["SoBan"]?.Value?.ToString() ?? string.Empty;
+                }
+            }
+            else
+            {
+                cmbBanAn.Text = row.Cells["SoBan"]?.Value?.ToString() ?? string.Empty;
+            }
 
             if (row.Cells["NgayDat"]?.Value != DBNull.Value && row.Cells["NgayDat"]?.Value != null)
                 dtpNgayDat.Value = Convert.ToDateTime(row.Cells["NgayDat"].Value);
@@ -560,12 +518,8 @@ WHERE IDDatBan = @IDDatBan";
             {
                 var v = Convert.ToDecimal(row.Cells["ThoiLuongPhut"].Value);
                 v = Math.Min(Math.Max(v, nudThoiLuong.Minimum), nudThoiLuong.Maximum);
-                nudThoiLuong.Value = v;
+                nudThoiLuong.Value = v;   // ValueChanged sẽ snap về bội số 15
             }
-
-            // Snap lại cho đẹp
-            SnapTimePickerTo15();
-            NudThoiLuong_ValueChanged(null, EventArgs.Empty);
         }
 
         private void btnLamMoi_Click(object sender, EventArgs e)

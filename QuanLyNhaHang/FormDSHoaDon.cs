@@ -53,34 +53,73 @@ namespace QuanLyNhaHang
         {
             using SqlConnection conn = new SqlConnection(connectionString);
             string query = @"
-            SELECT 
-                HD.IDHoaDon, 
-                HD.MaHoaDon, 
-                HD.NgayLap, 
-                HD.TongTien, 
-                HD.TrangThai,
-                BA.SoBan,
-                HD.GhiChu -- Lấy thêm cột GhiChú
-            FROM HoaDon HD
-            LEFT JOIN BanAn BA ON HD.SoBan = BA.IDBanAn";
+    SELECT 
+        HD.IDHoaDon, 
+        HD.MaHoaDon, 
+        HD.NgayLap, 
+        HD.TongTien, 
+        HD.TrangThai,
+        BA.SoBan,
+        HD.GhiChu,
+        HD.ThoiLuongPhut AS ThoiLuongYeuCauPhut,        -- phút đã yêu cầu khi tạo HĐ
+        CASE 
+            WHEN HD.SoBan IS NOT NULL 
+             AND HD.TrangThai IN (N'Chưa thanh toán', N'Nợ')
+                THEN DATEDIFF(MINUTE, HD.NgayLap, GETDATE())
+            ELSE NULL
+        END AS ThoiGianSuDungPhut                         -- phút đã sử dụng tới hiện tại
+    FROM HoaDon HD
+    LEFT JOIN BanAn BA ON HD.SoBan = BA.IDBanAn
+    ORDER BY HD.NgayLap DESC";
 
             SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
             DataTable dt = new DataTable();
             adapter.Fill(dt);
 
+            // Cột hiển thị thân thiện
+            if (!dt.Columns.Contains("ThoiGianSuDung"))
+                dt.Columns.Add("ThoiGianSuDung", typeof(string));        // dạng HH:mm
+            if (!dt.Columns.Contains("ThoiLuongYeuCau"))
+                dt.Columns.Add("ThoiLuongYeuCau", typeof(string));       // dạng "xx phút"
+
+            foreach (DataRow r in dt.Rows)
+            {
+                // HH:mm đã sử dụng (nếu HĐ còn mở)
+                if (r["ThoiGianSuDungPhut"] != DBNull.Value)
+                {
+                    int used = Convert.ToInt32(r["ThoiGianSuDungPhut"]);
+                    var ts = TimeSpan.FromMinutes(used);
+                    r["ThoiGianSuDung"] = $"{(int)ts.TotalHours:00}:{ts.Minutes:00}";
+                }
+                else r["ThoiGianSuDung"] = "";
+
+                // phút đã yêu cầu lúc tạo HĐ
+                if (r["ThoiLuongYeuCauPhut"] != DBNull.Value)
+                {
+                    int req = Convert.ToInt32(r["ThoiLuongYeuCauPhut"]);
+                    r["ThoiLuongYeuCau"] = req + " phút";
+                }
+                else r["ThoiLuongYeuCau"] = "";
+            }
+
             dtgvDSHoaDon.DataSource = dt;
             dtgvDSHoaDon.ClearSelection();
 
-            // Đổi tên cột hiển thị
+            // Đổi tiêu đề cột
             if (dtgvDSHoaDon.Columns["IDHoaDon"] != null) dtgvDSHoaDon.Columns["IDHoaDon"].HeaderText = "ID Hóa Đơn";
             if (dtgvDSHoaDon.Columns["MaHoaDon"] != null) dtgvDSHoaDon.Columns["MaHoaDon"].HeaderText = "Mã Hóa Đơn";
             if (dtgvDSHoaDon.Columns["NgayLap"] != null) dtgvDSHoaDon.Columns["NgayLap"].HeaderText = "Ngày Lập";
             if (dtgvDSHoaDon.Columns["TongTien"] != null) dtgvDSHoaDon.Columns["TongTien"].HeaderText = "Tổng Tiền";
             if (dtgvDSHoaDon.Columns["TrangThai"] != null) dtgvDSHoaDon.Columns["TrangThai"].HeaderText = "Trạng Thái";
             if (dtgvDSHoaDon.Columns["SoBan"] != null) dtgvDSHoaDon.Columns["SoBan"].HeaderText = "Số Bàn";
-            if (dtgvDSHoaDon.Columns["GhiChu"] != null) dtgvDSHoaDon.Columns["GhiChu"].HeaderText = "Ghi Chú"; // Hiển thị Ghi Chú
-        }
+            if (dtgvDSHoaDon.Columns["GhiChu"] != null) dtgvDSHoaDon.Columns["GhiChu"].HeaderText = "Ghi Chú";
+            if (dtgvDSHoaDon.Columns["ThoiGianSuDung"] != null) dtgvDSHoaDon.Columns["ThoiGianSuDung"].HeaderText = "Đã sử dụng";
+            if (dtgvDSHoaDon.Columns["ThoiLuongYeuCau"] != null) dtgvDSHoaDon.Columns["ThoiLuongYeuCau"].HeaderText = "Thời lượng yêu cầu";
 
+            // Ẩn cột số phút thô (nếu không cần nhìn)
+            if (dtgvDSHoaDon.Columns["ThoiGianSuDungPhut"] != null) dtgvDSHoaDon.Columns["ThoiGianSuDungPhut"].Visible = false;
+            if (dtgvDSHoaDon.Columns["ThoiLuongYeuCauPhut"] != null) dtgvDSHoaDon.Columns["ThoiLuongYeuCauPhut"].Visible = false;
+        }
 
         private void LoadNhanVienVaoCombobox()
         {
