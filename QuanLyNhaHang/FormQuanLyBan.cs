@@ -58,7 +58,8 @@ namespace QuanLyNhaHang
                     else
                         btnBan.BackColor = Color.Gray;
 
-                    btnBan.Click += BtnBan_Click;
+                    btnBan.Click += BtnBan_Click;          // click: mở form
+                    btnBan.MouseEnter += BtnBan_MouseEnter; // hover: điền thông tin
 
                     flpBanAn.Controls.Add(btnBan);
                 }
@@ -67,6 +68,20 @@ namespace QuanLyNhaHang
             {
                 MessageBox.Show("Lỗi khi tải danh sách bàn: " + ex.Message);
             }
+        }
+
+        // Hover: tự điền Mã số bàn + Trạng thái
+        private void BtnBan_MouseEnter(object? sender, EventArgs e)
+        {
+            if (sender is not Button btn || btn.Tag is not DataRow row) return;
+
+            string soBan = row["SoBan"]?.ToString() ?? string.Empty;
+            string trangThai = row["TrangThai"]?.ToString() ?? string.Empty;
+
+            txtMaSoBan.Text = soBan;
+
+            int idx = cmbTrangThai.FindStringExact(trangThai);
+            cmbTrangThai.SelectedIndex = idx >= 0 ? idx : -1;
         }
 
         private void BtnBan_Click(object? sender, EventArgs e)
@@ -83,7 +98,8 @@ namespace QuanLyNhaHang
 
                 if (idHoaDon <= 0)
                 {
-                    MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Không tìm thấy hóa đơn đang mở cho bàn này.\nHệ thống đã chuyển bàn về trạng thái 'Trống'.",
+                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     CapNhatTrangThaiBanTheoSoBan(soBan, "Trống");
                     clickedButton.Text = $"Bàn {soBan}\nTrống";
@@ -120,7 +136,17 @@ namespace QuanLyNhaHang
                 var datTruoc = TimDatBanGanNhatChoBan(idBanAn);
                 if (datTruoc == null)
                 {
-                    MessageBox.Show("Không tìm thấy bản ghi đặt bàn đang hiệu lực cho bàn này.", "Thông báo");
+                    // Không còn đặt bàn hiệu lực ➜ tự trả bàn về Trống
+                    CapNhatTrangThaiBanTheoIDBanAn(idBanAn, "Trống");
+
+                    clickedButton.Text = $"Bàn {soBan}\nTrống";
+                    clickedButton.BackColor = Color.Aqua;
+                    row["TrangThai"] = "Trống";
+                    clickedButton.Tag = row;
+
+                    MessageBox.Show(
+                        "Không tìm thấy bản ghi đặt bàn đang hiệu lực cho bàn này.\nHệ thống đã chuyển bàn về trạng thái 'Trống'.",
+                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
@@ -284,44 +310,80 @@ ORDER BY (CAST(d.NgayDat AS datetime) + CAST(d.GioDat AS datetime)) DESC";
                 return;
             }
 
-            var result = MessageBox.Show("Bạn có chắc muốn xóa bàn này?", "Xác nhận", MessageBoxButtons.YesNo);
-            if (result != DialogResult.Yes)
-                return;
+            var confirm = MessageBox.Show("Bạn có chắc muốn xóa bàn này?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (confirm != DialogResult.Yes) return;
 
             try
             {
                 using SqlConnection conn = new SqlConnection(connectionString);
                 conn.Open();
-
-                using SqlTransaction transaction = conn.BeginTransaction();
+                using SqlTransaction tran = conn.BeginTransaction();
 
                 try
                 {
-                    string deleteDatBanQuery = "DELETE FROM DatBan WHERE IDBanAn = (SELECT IDBanAn FROM BanAn WHERE SoBan = @SoBan)";
-                    using SqlCommand deleteDatBanCmd = new SqlCommand(deleteDatBanQuery, conn, transaction);
-                    deleteDatBanCmd.Parameters.AddWithValue("@SoBan", txtMaSoBan.Text.Trim());
-                    deleteDatBanCmd.ExecuteNonQuery();
+                    // Khóa hàng cần xóa và đọc trạng thái ngay trong giao dịch
+                    string sqlSelect = @"
+SELECT IDBanAn, ISNULL(TrangThai, N'') AS TrangThai
+FROM BanAn WITH (UPDLOCK, HOLDLOCK)
+WHERE SoBan = @SoBan";
+                    using SqlCommand cmdSel = new SqlCommand(sqlSelect, conn, tran);
+                    cmdSel.Parameters.AddWithValue("@SoBan", txtMaSoBan.Text.Trim());
 
-                    string deleteBanAnQuery = "DELETE FROM BanAn WHERE SoBan = @SoBan";
-                    using SqlCommand deleteBanAnCmd = new SqlCommand(deleteBanAnQuery, conn, transaction);
-                    deleteBanAnCmd.Parameters.AddWithValue("@SoBan", txtMaSoBan.Text.Trim());
-                    int rows = deleteBanAnCmd.ExecuteNonQuery();
-
-                    if (rows > 0)
+                    int idBanAn;
+                    string trangThai;
+                    using (var rd = cmdSel.ExecuteReader())
                     {
-                        transaction.Commit();
-                        MessageBox.Show("Xóa bàn thành công.");
-                        LoadDanhSachBan();
+                        if (!rd.Read())
+                        {
+                            MessageBox.Show("Không tìm thấy bàn để xóa.");
+                            rd.Close();
+                            tran.Rollback();
+                            return;
+                        }
+                        idBanAn = rd.GetInt32(0);
+                        trangThai = rd.GetString(1);
                     }
-                    else
+
+                    // RÀNG BUỘC: chỉ cho xóa khi Trạng thái = Trống
+                    if (!string.Equals(trangThai, "Trống", StringComparison.OrdinalIgnoreCase))
                     {
-                        transaction.Rollback();
-                        MessageBox.Show("Không tìm thấy bàn để xóa.");
+                        MessageBox.Show("Không thể xóa bàn đang ở trạng thái 'Có người' hoặc 'Đã đặt'.\n" +
+                                        "Vui lòng hoàn tất hóa đơn/huỷ đặt bàn và chuyển bàn về 'Trống' trước.",
+                                        "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        tran.Rollback();
+                        return;
+                    }
+
+                    // (Giữ nguyên logic dọn dữ liệu lịch sử đặt bàn nếu có)
+                    string deleteDatBanQuery = "DELETE FROM DatBan WHERE IDBanAn = @ID";
+                    using (SqlCommand deleteDatBanCmd = new SqlCommand(deleteDatBanQuery, conn, tran))
+                    {
+                        deleteDatBanCmd.Parameters.AddWithValue("@ID", idBanAn);
+                        deleteDatBanCmd.ExecuteNonQuery();
+                    }
+
+                    string deleteBanAnQuery = "DELETE FROM BanAn WHERE IDBanAn = @ID";
+                    using (SqlCommand deleteBanAnCmd = new SqlCommand(deleteBanAnQuery, conn, tran))
+                    {
+                        deleteBanAnCmd.Parameters.AddWithValue("@ID", idBanAn);
+                        int rows = deleteBanAnCmd.ExecuteNonQuery();
+
+                        if (rows > 0)
+                        {
+                            tran.Commit();
+                            MessageBox.Show("Xóa bàn thành công.");
+                            LoadDanhSachBan();
+                        }
+                        else
+                        {
+                            tran.Rollback();
+                            MessageBox.Show("Không tìm thấy bàn để xóa.");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    transaction.Rollback();
+                    try { tran.Rollback(); } catch { }
                     MessageBox.Show("Lỗi khi xóa bàn: " + ex.Message);
                 }
             }
@@ -373,12 +435,5 @@ ORDER BY (CAST(d.NgayDat AS datetime) + CAST(d.GioDat AS datetime)) DESC";
             cmbTrangThai.SelectedIndex = -1;
             LoadDanhSachBan();
         }
-    }
-
-    public class ThongTinDatBan
-    {
-        public string TenKhach { get; set; }
-        public string SoDienThoai { get; set; }
-        public DateTime ThoiGianDat { get; set; }
     }
 }
