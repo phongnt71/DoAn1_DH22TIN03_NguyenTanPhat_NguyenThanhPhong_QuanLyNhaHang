@@ -8,6 +8,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace QuanLyNhaHang
 {
@@ -17,6 +18,7 @@ namespace QuanLyNhaHang
 
         private FormQuanLyBan? formQuanLyBan;
         private int currentIdHoaDon = -1;
+        private System.Windows.Forms.Timer autoFreeTimer; // quét hết giờ
 
         public FormDSHoaDon(FormQuanLyBan formQLBan)
         {
@@ -33,7 +35,112 @@ namespace QuanLyNhaHang
         {
             LoadDanhSachHoaDon();
             LoadNhanVienVaoCombobox();
+            StartAutoFreeTimer();
+            FreeExpiredTablesAndRefresh();
         }
+
+        // Khởi động timer chỉ-đọc
+        private void StartAutoFreeTimer()
+        {
+            if (autoFreeTimer != null) return;
+            autoFreeTimer = new System.Windows.Forms.Timer();
+            autoFreeTimer.Interval = 30000; // 30 giây
+            autoFreeTimer.Tick += (s, e) => FreeExpiredTablesAndRefresh();
+            autoFreeTimer.Start();
+
+            // Đảm bảo giải phóng timer khi đóng form (tránh leak)
+            this.FormClosed += (s, e) =>
+            {
+                autoFreeTimer?.Stop();
+                autoFreeTimer?.Dispose();
+                autoFreeTimer = null;
+            };
+        }
+
+        // Gọi xử lý và refresh UI khi có thay đổi
+        private void FreeExpiredTablesAndRefresh()
+        {
+            int changed = FreeExpiredTables(); // xử lý DB
+            if (changed > 0)
+            {
+                // chỉ refresh khi có bàn được trả
+                LoadDanhSachHoaDon();
+                formQuanLyBan?.LoadDanhSachBan();
+                // Không popup để tránh làm phiền; nếu muốn thì MessageBox ở đây.
+            }
+        }
+
+        /// <summary>
+        /// Tìm hóa đơn vẫn còn chiếm bàn & đã dùng >= ThoiLuongPhut:
+        ///  - Set HoaDon.SoBan = NULL
+        ///  - Nếu đang 'Chưa thanh toán' => chuyển 'Nợ'
+        ///  - Trả bàn về 'Trống'
+        /// Trả về số bàn đã giải phóng.
+        /// </summary>
+        private int FreeExpiredTables()
+        {
+            int freed = 0;
+
+            using SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+
+            // Lấy danh sách hóa đơn quá giờ (chỉ các hóa đơn còn mở & có SoBan + ThoiLuongPhut)
+            string sqlSelect = @"
+SELECT h.IDHoaDon, h.SoBan
+FROM HoaDon h
+WHERE h.TrangThai IN (N'Chưa thanh toán', N'Nợ')
+  AND h.SoBan IS NOT NULL
+  AND h.ThoiLuongPhut IS NOT NULL
+  AND DATEDIFF(MINUTE, h.NgayLap, GETDATE()) >= h.ThoiLuongPhut";
+
+            using var cmd = new SqlCommand(sqlSelect, conn);
+            using var rd = cmd.ExecuteReader();
+            var list = new List<(int idHD, int idBan)>();
+            while (rd.Read())
+            {
+                int idHD = rd.GetInt32(0);
+                int idBan = rd.GetInt32(1);           // Chú ý: SoBan = IDBanAn
+                list.Add((idHD, idBan));
+            }
+            rd.Close();
+
+            foreach (var item in list)
+            {
+                using var tran = conn.BeginTransaction();
+                try
+                {
+                    // 1) Tách bàn + chuyển trạng thái hóa đơn sang 'Nợ' nếu đang 'Chưa thanh toán'
+                    string sqlUpdHD = @"
+UPDATE HoaDon
+SET SoBan = NULL,
+    TrangThai = CASE WHEN TrangThai = N'Chưa thanh toán' THEN N'Nợ' ELSE TrangThai END
+WHERE IDHoaDon = @ID";
+                    using (var c1 = new SqlCommand(sqlUpdHD, conn, tran))
+                    {
+                        c1.Parameters.AddWithValue("@ID", item.idHD);
+                        c1.ExecuteNonQuery();
+                    }
+
+                    // 2) Trả bàn về 'Trống'
+                    string sqlUpdBan = "UPDATE BanAn SET TrangThai = N'Trống' WHERE IDBanAn = @BID";
+                    using (var c2 = new SqlCommand(sqlUpdBan, conn, tran))
+                    {
+                        c2.Parameters.AddWithValue("@BID", item.idBan);
+                        c2.ExecuteNonQuery();
+                    }
+
+                    tran.Commit();
+                    freed++;
+                }
+                catch
+                {
+                    try { tran.Rollback(); } catch { }
+                }
+            }
+
+            return freed;
+        }
+
         public void CapNhatTrangThaiBanTheoIDBanAn(int idBanAn, string trangThai)
         {
             using SqlConnection conn = new SqlConnection(connectionString);
